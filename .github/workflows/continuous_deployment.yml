@@ -1,0 +1,33 @@
+name: 'Deploy to Dokku'
+
+on:
+  push:
+    branches: [main, staging]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cancel Previous Runs # Optional step
+        uses: styfle/cancel-workflow-action@0.4.0
+        with:
+          access_token: ${{ github.token }}
+
+      - name: Cloning repo # This step is required
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0 # This is required or you might get an error from Dokku
+
+      - name: Deploy to dokku staging
+        if: github.ref == 'refs/heads/staging'
+        uses: dokku/github-action@master
+        with:
+          git_remote_url: ${{ secrets.DOKKU_STAGING_REPO }}
+          ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Deploy to dokku production
+        if: github.ref == 'refs/heads/main'
+        uses: dokku/github-action@master
+        with:
+          git_remote_url: ${{ secrets.DOKKU_PRODUCTION_REPO }}
+          ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY }}
