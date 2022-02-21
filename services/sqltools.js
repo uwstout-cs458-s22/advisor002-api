@@ -27,7 +27,29 @@ function insertValues(values) {
   return { text: '', params: [] };
 }
 
+function updateValues(values) {
+  if (values && Object.keys(values).length > 0) {
+    const columns = Object.keys(values);
+    const params = Object.values(values);
+
+    let setupText = 'SET ';
+    let count = 1;
+    columns.forEach(x => {
+      setupText += count == columns.length ? `${x} = $${count}` : `${x} = $${count}, `;
+      count++;
+    });
+
+    return {
+      text: setupText,
+      params: params,
+    };
+  }
+
+  return { text: '', params: [] };
+}
+
 module.exports = {
   whereParams: whereParams,
   insertValues: insertValues,
+  updateValues: updateValues,
 };

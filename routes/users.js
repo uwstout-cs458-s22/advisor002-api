@@ -46,6 +46,29 @@ module.exports = () => {
     }
   });
 
+  router.put('/:id(\\d+)', authorizeSession, async (req, res, next) => {
+    try {
+      const id = req.params.id;
+      const user = await User.findOne({ id: id });
+      
+      if(isEmpty(user)) {
+        throw new HttpError.NotFound();
+      }
+
+      if(isEmpty(req.body)) {
+        throw new HttpError.BadRequest();
+      }
+
+      updatedUser = await User.update(user.id, req.body);
+
+      res.setHeader('Location', `/users/${user.id}`);
+      return res.send(updatedUser);
+
+    } catch(error) {
+      next(error);
+    }
+  });
+
   router.post('/', authorizeSession, async (req, res, next) => {
     try {
       const userId = req.body.userId;
