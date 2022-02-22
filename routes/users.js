@@ -46,7 +46,7 @@ module.exports = () => {
     }
   });
 
-  router.put('/:id(\\d+)', async (req, res, next) => {
+  router.put('/:id(\\d+)', authorizeSession, async (req, res, next) => {
     try {
       const id = req.params.id;
       const user = await User.findOne({ id: id });
