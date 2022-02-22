@@ -82,6 +82,9 @@ async function update(id, newUser) {
       log.debug(`Successfully updated user with id ${id} in the database with the data ${JSON.stringify(newUser)}`)
       return res.rows[0];
     }
+    throw HttpError(500, 'Unexpected DB condition, update successful with no returned record');
+  } else {
+    throw HttpError(400, 'Id and a put document are required');
   }
 }
 
