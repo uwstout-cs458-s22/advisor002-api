@@ -46,7 +46,7 @@ module.exports = () => {
     }
   });
 
-  router.put('/:id(\\d+)', authorizeSession, async (req, res, next) => {
+  router.put('/:id(\\d+)', async (req, res, next) => {
     try {
       const id = req.params.id;
       const user = await User.findOne({ id: id });
@@ -57,6 +57,12 @@ module.exports = () => {
 
       if(isEmpty(req.body)) {
         throw new HttpError.BadRequest();
+      }
+
+      const sender = await User.findOne({ id: req.body.senderId });
+
+      if(!(sender.role === 'admin' || user.id === sender.id)) {
+        throw new HttpError.Forbidden();
       }
 
       updatedUser = await User.update(user.id, req.body);

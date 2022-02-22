@@ -266,9 +266,17 @@ describe('PUT /users', () => {
       const data = dataForGetUser(3);
       for(let i = 0; i < data.length; i++) {
         const row = data[i];
+        const requestor = {
+          id: 75,
+          email: 'fake@email.com',
+          role: 'admin',
+          enable: true,
+          userId: 'user-test-thingy'
+        }
         const requestParams = {
-          role: "admin",
-          enable: true
+          senderId: requestor.id,
+          userId: row.userId,
+          email: row.email,
         };
         const updatedUser = {
           userId: row.userId,
@@ -278,12 +286,12 @@ describe('PUT /users', () => {
           id: row.id
         };
 
-        User.findOne.mockResolvedValueOnce(row);
+        User.findOne.mockResolvedValueOnce(row).mockResolvedValueOnce(requestor);
         User.update.mockResolvedValueOnce(updatedUser);
         await request(app).put(`/users/${row.id}`).send(requestParams);
-        expect(User.findOne.mock.calls).toHaveLength(i+1);
+        expect(User.findOne.mock.calls).toHaveLength((i+1)*2);
         expect(User.findOne.mock.calls[i]).toHaveLength(1);
-        expect(User.findOne.mock.calls[i][0]).toHaveProperty('id', row.id);
+        expect([row.id, requestor.id]).toContain(User.findOne.mock.calls[i+1][0].id);
         expect(User.update.mock.calls).toHaveLength(i+1);
         expect(User.update.mock.calls[i]).toHaveLength(2);
         expect(User.update.mock.calls[i][0]).toBe(row.id);
@@ -293,7 +301,15 @@ describe('PUT /users', () => {
     test('should respond with a json object containing the user id', async () => {
       const data = dataForGetUser(10);
       for (const row of data) {
+        const requestor = {
+          id: 75,
+          email: 'fake@email.com',
+          role: 'admin',
+          enable: true,
+          userId: 'user-test-thingy'
+        }
         const requestParams = {
+          senderId: requestor.id,
           role: "admin",
           enable: true
         };
@@ -305,7 +321,7 @@ describe('PUT /users', () => {
           id: row.id
         };
 
-        User.findOne.mockResolvedValueOnce(row);
+        User.findOne.mockResolvedValueOnce(row).mockResolvedValueOnce(requestor);
         User.update.mockResolvedValueOnce(updatedUser);
 
         const { body: user } = await request(app).put(`/users/${row.id}`).send(requestParams);
@@ -351,6 +367,25 @@ describe('PUT /users', () => {
       User.update.mockRejectedValueOnce(new Error('some database error'));
       const response = await request(app).put('/users/1').send();
       expect(response.statusCode).toBe(400);
+    });
+    test('should respond with a 403 bad request', async () => {
+      const data = dataForGetUser(1);
+      const row = data[0];
+      const requestor = {
+        id: 75,
+        email: 'fake@email.com',
+        role: 'user',
+        enable: true,
+        userId: 'user-test-thingy'
+      }
+      const requestParams = {
+        senderId: requestor.id,
+        enable: true,
+        role: 'admin',
+      };
+      User.findOne.mockResolvedValueOnce(row).mockResolvedValueOnce(requestor);
+      const response = await request(app).put(`/users/${row.id}`).send(requestParams);
+      expect(response.statusCode).toBe(403);
     });
   });
 });
