@@ -65,7 +65,7 @@ module.exports = () => {
         throw new HttpError.Forbidden();
       }
 
-      updatedUser = await User.update(user.id, req.body);
+      const updatedUser = await User.update(user.id, req.body);
 
       res.setHeader('Location', `/users/${user.id}`);
       return res.send(updatedUser);

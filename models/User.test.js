@@ -176,7 +176,7 @@ describe('User Model', () => {
       };
 
       db.query.mockResolvedValue({ rows: data });
-      const user = await User.update(row.id, putDoc);
+      await User.update(row.id, putDoc);
       expect(db.query.mock.calls).toHaveLength(1);
       expect(db.query.mock.calls[0]).toHaveLength(2);
       expect(db.query.mock.calls[0][0]).toBe(

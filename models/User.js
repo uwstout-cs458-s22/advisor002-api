@@ -69,7 +69,7 @@ async function update(id, newUser) {
     });
 
     const n = params.length;
-    let paramList = new Array();
+    const paramList = new Array();
     params.forEach(x => {
       paramList.push(x);
     });

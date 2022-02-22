@@ -345,8 +345,6 @@ describe('PUT /users', () => {
       expect(response.statusCode).toBe(500);
     });
     test('should respond with a 404 not found', async () => {
-      const data = dataForGetUser(1);
-      const row = data[0];
       const requestParams = {
         enable: true,
         role: 'admin',
@@ -359,10 +357,6 @@ describe('PUT /users', () => {
     test('should respond with a 400 bad request', async () => {
       const data = dataForGetUser(1);
       const row = data[0];
-      const requestParams = {
-        enable: true,
-        role: 'admin',
-      };
       User.findOne.mockResolvedValueOnce({ row: row });
       User.update.mockRejectedValueOnce(new Error('some database error'));
       const response = await request(app).put('/users/1').send();
