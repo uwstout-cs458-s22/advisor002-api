@@ -1,4 +1,5 @@
 const log = require('loglevel');
+const { test } = require('stytch/types/lib/envs');
 const { db } = require('../services/database');
 const env = require('../services/environment');
 const User = require('./User');
@@ -265,6 +266,18 @@ describe('User Model', () => {
     test('User.create with no input', async () => {
       await expect(User.create()).rejects.toThrowError('UserId and Email are required.');
       expect(db.query.mock.calls).toHaveLength(0);
+    });
+  });
+
+  describe('delete a user', () => {
+    beforeEach(() => {
+      db.query.mockReset();
+      db.query.mockResolvedValue(null);
+    });
+
+    test('Program should respond with code 200 if successful', async () => {
+      // create a user and make sure it exists
+      // delete the user and make sure it throws code 200
     });
   });
 });

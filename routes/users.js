@@ -66,5 +66,28 @@ module.exports = () => {
     }
   });
 
+  router.delete('/', authorizeSession, async (req, res, next) => {
+    try {
+      const userId = req.body.userId;
+      const email = req.body.email;
+      if (!userId || !email) {
+        throw HttpError(400, 'Required Parameters Missing');
+      }
+      let user = await User.findOne({ userId: userId });
+      if (isEmpty(user)) {
+        user = await User.create(userId, email);
+        res.status(201); // otherwise
+      }
+
+      const deletedUser = await User.deleteUser(user.id,user.email);
+
+      res.setHeader('Location', `/users/${user.id}`);
+      log.info(`${req.method} ${req.originalUrl} success: returning user ${email}`);
+      return res.send(deletedUser);
+    } catch (error) {
+      next(error);
+    }
+  });
+
   return router;
 };
