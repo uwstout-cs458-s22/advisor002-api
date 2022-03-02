@@ -4,6 +4,7 @@ const HttpError = require('http-errors');
 const { isEmpty } = require('./../services/utils');
 const User = require('./../models/User');
 const { authorizeSession } = require('./../services/auth');
+const { db } = require('../services/database');
 
 module.exports = () => {
   const router = express.Router();
@@ -70,24 +71,26 @@ module.exports = () => {
     try {
       const userId = req.body.userId;
       const email = req.body.email;
-      if (!userId || !email) {
+      const user = await User.findOne({ userId: userId });
+
+      // check for required parameters
+      if (!email || !userId) {
         throw HttpError(400, 'Required Parameters Missing');
       }
-      let user = await User.findOne({ userId: userId });
-      if (isEmpty(user)) {
-        user = await User.create(userId, email);
-        res.status(201); // otherwise
+      // check that user exists
+      else if (isEmpty(user)) {
+        throw new HttpError.NotFound();
       }
-
-      const deletedUser = await User.deleteUser(user.id,user.email);
-
-      res.setHeader('Location', `/users/${user.id}`);
-      log.info(`${req.method} ${req.originalUrl} success: returning user ${email}`);
-      return res.send(deletedUser);
+      else {
+        const role = await db.query(`SELECT "role" FROM "user" WHERE email = ${email} RETURNING *;`);
+        if(role === 'admin') {
+          await User.deleteUser(userId, email);
+          res.status(200);
+        }
+      }
     } catch (error) {
       next(error);
     }
   });
-
   return router;
 };

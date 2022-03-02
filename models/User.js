@@ -61,30 +61,22 @@ async function create(userId, email) {
 
   // if successful, user is delted.
   // if db error, db.query will throw a rejected promise
-  async function deleteUser(email) {
+  // userId refers to the user being deleted
+  // email is used to check for admin role on the deleter
+  async function deleteUser(userId, email) {
   // email is required
-  if (email) {
-    const enable = email === env.masterAdminEmail;
-    const role = email === env.masterAdminEmail ? 'admin' : 'user';
-    const { text, params } = insertValues({
-      email: email,
-      enable: enable,
-      role: role,
-    });
-    const res = await db.query(`DELETE FROM "user" WHERE ${email} = 'email' RETURNING *;`, params);
+  if (userId && email) {
+    const res = await db.query(`DELETE FROM "user" WHERE userId = ${userId};`);
     if (res.rows.length < 1) {
       log.debug(
-        `Successfully deleted user ${email} from db. Deleted data: ${text}, ${JSON.stringify(params)}`
+        `Successfully deleted user ${email} from db}`
       );
-      return HttpError(200, 'User successfully deleted');
+      return res;
     }
   } else {
     throw HttpError(400, 'UserId and Email are required.');
+    }
   }
-      
-  }
-  
-
 }
 
 module.exports = {
