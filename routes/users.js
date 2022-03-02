@@ -67,7 +67,7 @@ module.exports = () => {
     }
   });
 
-  router.delete('/', authorizeSession, async (req, res, next) => {
+  router.delete('/', async (req, res, next) => {
     try {
       const userId = req.body.userId;
       const email = req.body.email;
@@ -80,12 +80,15 @@ module.exports = () => {
       // check that user exists
       else if (isEmpty(user)) {
         throw new HttpError.NotFound();
-      }
-      else {
-        const role = await db.query(`SELECT "role" FROM "user" WHERE email = ${email} RETURNING *;`);
-        if(role === 'admin') {
+      } else {
+        const role = await User.findOne({ email: email });
+        if (role.role === 'admin' || user.email === email) {
           await User.deleteUser(userId, email);
           res.status(200);
+          res.send();
+        } else {
+          res.status(403);
+          res.send({ error: 'You are not authorized to do this' });
         }
       }
     } catch (error) {
