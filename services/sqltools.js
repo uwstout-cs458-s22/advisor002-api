@@ -3,11 +3,17 @@ function whereParams(values) {
     const text =
       'WHERE ' +
       Object.keys(values)
-        .map((col, index) => `"${col}"=$${index + 1}`)
-        .join(' AND ');
-    return { text: text, params: Object.values(values) };
+      .map((col, index) => `"${col}"=$${index + 1}`)
+      .join(' AND ');
+    return {
+      text: text,
+      params: Object.values(values)
+    };
   }
-  return { text: '', params: [] };
+  return {
+    text: '',
+    params: []
+  };
 }
 
 function insertValues(values) {
@@ -24,10 +30,38 @@ function insertValues(values) {
       params: params,
     };
   }
-  return { text: '', params: [] };
+  return {
+    text: '',
+    params: []
+  };
+}
+
+function updateValues(values) {
+  if (values && Object.keys(values).length > 0) {
+    const columns = Object.keys(values);
+    const params = Object.values(values);
+
+    let setText = 'SET ';
+    let count = 1;
+    columns.forEach((x) => {
+      setText += count === columns.length ? `${x} = $${count}` : `${x} = $${count}, `;
+      count++;
+    });
+
+    return {
+      text: setText,
+      params: params
+    };
+  }
+
+  return {
+    text: '',
+    params: []
+  };
 }
 
 module.exports = {
   whereParams: whereParams,
   insertValues: insertValues,
+  updateValues: updateValues
 };
