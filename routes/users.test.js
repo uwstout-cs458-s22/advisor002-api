@@ -12,7 +12,7 @@ jest.mock('../models/User.js', () => {
     findOne: jest.fn(),
     findAll: jest.fn(),
     create: jest.fn(),
-    update: jest.fn(),
+    update: jest.fn()
   };
 });
 
@@ -21,7 +21,7 @@ jest.mock('../services/environment', () => {
     port: 3001,
     stytchProjectId: 'project-test-11111111-1111-1111-1111-111111111111',
     stytchSecret: 'secret-test-111111111111',
-    masterAdminEmail: 'master@gmail.com',
+    masterAdminEmail: 'master@gmail.com'
   };
 });
 
@@ -29,7 +29,7 @@ jest.mock('../services/auth', () => {
   return {
     authorizeSession: jest.fn().mockImplementation((req, res, next) => {
       return next();
-    }),
+    })
   };
 });
 
@@ -43,7 +43,7 @@ function dataForGetUser(rows, offset = 0) {
       email: `email${value}@uwstout.edu`,
       userId: `user-test-someguid${value}`,
       enable: 'false',
-      role: 'user',
+      role: 'user'
     });
   }
   return data;
@@ -103,13 +103,13 @@ describe('GET /users', () => {
 
     test('should respond with a 404 status code when user does NOT exists', async () => {
       User.findOne.mockResolvedValueOnce({});
-      const response = await request(app).get(`/users/100`);
+      const response = await request(app).get('/users/100');
       expect(response.statusCode).toBe(404);
     });
 
     test('should respond with a 500 status code when an error occurs', async () => {
       User.findOne.mockRejectedValueOnce(new Error('Some Database Error'));
-      const response = await request(app).get(`/users/100`);
+      const response = await request(app).get('/users/100');
       expect(response.statusCode).toBe(500);
     });
   });
@@ -149,13 +149,13 @@ describe('GET /users', () => {
 
     test('should respond with a 404 status code when user does NOT exists', async () => {
       User.findOne.mockResolvedValueOnce({});
-      const response = await request(app).get(`/users/user-test-someguid`);
+      const response = await request(app).get('/users/user-test-someguid');
       expect(response.statusCode).toBe(404);
     });
 
     test('should respond with a 500 status code when an error occurs', async () => {
       User.findOne.mockRejectedValueOnce(new Error('Some Database Error'));
-      const response = await request(app).get(`/users/user-test-someguid`);
+      const response = await request(app).get('/users/user-test-someguid');
       expect(response.statusCode).toBe(500);
     });
   });
@@ -164,7 +164,7 @@ describe('GET /users', () => {
     test('should make a call to User.findAll', async () => {
       const data = dataForGetUser(10);
       User.findAll.mockResolvedValueOnce(data);
-      await request(app).get(`/users`);
+      await request(app).get('/users');
       expect(User.findAll.mock.calls).toHaveLength(1);
       expect(User.findAll.mock.calls[0]).toHaveLength(3);
       expect(User.findAll.mock.calls[0][0]).toBeNull();
@@ -175,7 +175,7 @@ describe('GET /users', () => {
     test('should make a call to findAll - with limits', async () => {
       const data = dataForGetUser(3);
       User.findAll.mockResolvedValueOnce(data);
-      await request(app).get(`/users?limit=3`);
+      await request(app).get('/users?limit=3');
       expect(User.findAll.mock.calls).toHaveLength(1);
       expect(User.findAll.mock.calls[0]).toHaveLength(3);
       expect(User.findAll.mock.calls[0][0]).toBeNull();
@@ -186,7 +186,7 @@ describe('GET /users', () => {
     test('should make a call to findAll - with offset', async () => {
       const data = dataForGetUser(3);
       User.findAll.mockResolvedValueOnce(data);
-      await request(app).get(`/users?offset=1`);
+      await request(app).get('/users?offset=1');
       expect(User.findAll.mock.calls).toHaveLength(1);
       expect(User.findAll.mock.calls[0]).toHaveLength(3);
       expect(User.findAll.mock.calls[0][0]).toBeNull();
@@ -197,7 +197,7 @@ describe('GET /users', () => {
     test('should make a call to findAll- with limit and offset', async () => {
       const data = dataForGetUser(3, 1);
       User.findAll.mockResolvedValueOnce(data);
-      await request(app).get(`/users?limit=3&offset=1`);
+      await request(app).get('/users?limit=3&offset=1');
       expect(User.findAll.mock.calls).toHaveLength(1);
       expect(User.findAll.mock.calls[0]).toHaveLength(3);
       expect(User.findAll.mock.calls[0][0]).toBeNull();
@@ -208,7 +208,7 @@ describe('GET /users', () => {
     test('should respond with a json array object containg the user data', async () => {
       const data = dataForGetUser(5);
       User.findAll.mockResolvedValueOnce(data);
-      const { body: users } = await request(app).get(`/users`);
+      const { body: users } = await request(app).get('/users');
       expect(users).toHaveLength(data.length);
       for (let i = 0; i < data.length; i++) {
         expect(users[i].id).toBe(data[i].id);
@@ -221,32 +221,32 @@ describe('GET /users', () => {
 
     test('should respond with a json array object containg no data', async () => {
       User.findAll.mockResolvedValueOnce([]);
-      const response = await request(app).get(`/users`);
+      const response = await request(app).get('/users');
       expect(response.body).toHaveLength(0);
     });
 
     test('should specify json in the content type header', async () => {
       User.findAll.mockResolvedValueOnce([]);
-      const response = await request(app).get(`/users`);
+      const response = await request(app).get('/users');
       expect(response.headers['content-type']).toEqual(expect.stringContaining('json'));
     });
 
     test('should respond with a 200 status code when user data returned', async () => {
       const data = dataForGetUser(5);
       User.findAll.mockResolvedValueOnce(data);
-      const response = await request(app).get(`/users`);
+      const response = await request(app).get('/users');
       expect(response.statusCode).toBe(200);
     });
 
     test('should respond with a 200 status code when user data returned (even no users)', async () => {
       User.findAll.mockResolvedValueOnce([]);
-      const response = await request(app).get(`/users`);
+      const response = await request(app).get('/users');
       expect(response.statusCode).toBe(200);
     });
 
     test('should respond with a 500 status code when an error occurs', async () => {
       User.findAll.mockRejectedValueOnce(new Error('Some Database Failure'));
-      const response = await request(app).get(`/users`);
+      const response = await request(app).get('/users');
       expect(response.statusCode).toBe(500);
       expect(response.body.error.message).toBe('Some Database Failure');
     });
@@ -264,7 +264,7 @@ describe('PUT /users', () => {
   describe('given an id', () => {
     test('should call both User.findOne and User.update', async () => {
       const data = dataForGetUser(3);
-      for(let i = 0; i < data.length; i++) {
+      for (let i = 0; i < data.length; i++) {
         const row = data[i];
         const requestor = {
           id: 75,
@@ -272,11 +272,11 @@ describe('PUT /users', () => {
           role: 'admin',
           enable: true,
           userId: 'user-test-thingy'
-        }
+        };
         const requestParams = {
           senderId: requestor.id,
           userId: row.userId,
-          email: row.email,
+          email: row.email
         };
         const updatedUser = {
           userId: row.userId,
@@ -289,10 +289,10 @@ describe('PUT /users', () => {
         User.findOne.mockResolvedValueOnce(row).mockResolvedValueOnce(requestor);
         User.update.mockResolvedValueOnce(updatedUser);
         await request(app).put(`/users/${row.id}`).send(requestParams);
-        expect(User.findOne.mock.calls).toHaveLength((i+1)*2);
+        expect(User.findOne.mock.calls).toHaveLength((i + 1) * 2);
         expect(User.findOne.mock.calls[i]).toHaveLength(1);
-        expect([row.id, requestor.id]).toContain(User.findOne.mock.calls[i+1][0].id);
-        expect(User.update.mock.calls).toHaveLength(i+1);
+        expect([row.id, requestor.id]).toContain(User.findOne.mock.calls[i + 1][0].id);
+        expect(User.update.mock.calls).toHaveLength(i + 1);
         expect(User.update.mock.calls[i]).toHaveLength(2);
         expect(User.update.mock.calls[i][0]).toBe(row.id);
         expect(User.update.mock.calls[i][1]).toStrictEqual(requestParams);
@@ -307,10 +307,10 @@ describe('PUT /users', () => {
           role: 'admin',
           enable: true,
           userId: 'user-test-thingy'
-        }
+        };
         const requestParams = {
           senderId: requestor.id,
-          role: "admin",
+          role: 'admin',
           enable: true
         };
         const updatedUser = {
@@ -336,10 +336,18 @@ describe('PUT /users', () => {
       const data = dataForGetUser(1);
       const row = data[0];
       const requestParams = {
+        senderId: 1,
         enable: true,
-        role: 'admin',
+        role: 'admin'
       };
-      User.findOne.mockResolvedValueOnce({ row: row });
+      const requestor = {
+        id: 75,
+        email: 'fake@email.com',
+        role: 'admin',
+        enable: true,
+        userId: 'user-test-thingy'
+      };
+      User.findOne.mockResolvedValueOnce({ row: row }).mockResolvedValueOnce({ row: requestor});
       User.update.mockRejectedValueOnce(new Error('some database error'));
       const response = await request(app).put('/users/1').send(requestParams);
       expect(response.statusCode).toBe(500);
@@ -347,7 +355,7 @@ describe('PUT /users', () => {
     test('should respond with a 404 not found', async () => {
       const requestParams = {
         enable: true,
-        role: 'admin',
+        role: 'admin'
       };
       User.findOne.mockResolvedValueOnce({});
       User.update.mockRejectedValueOnce(new Error(''));
@@ -371,11 +379,11 @@ describe('PUT /users', () => {
         role: 'user',
         enable: true,
         userId: 'user-test-thingy'
-      }
+      };
       const requestParams = {
         senderId: requestor.id,
         enable: true,
-        role: 'admin',
+        role: 'admin'
       };
       User.findOne.mockResolvedValueOnce(row).mockResolvedValueOnce(requestor);
       const response = await request(app).put(`/users/${row.id}`).send(requestParams);
@@ -399,7 +407,7 @@ describe('POST /users', () => {
         const row = data[i];
         const requestParams = {
           userId: row.userId,
-          email: row.email,
+          email: row.email
         };
         User.findOne.mockResolvedValueOnce({});
         User.create.mockResolvedValueOnce(row);
@@ -421,7 +429,7 @@ describe('POST /users', () => {
         User.create.mockResolvedValueOnce(row);
         const requestParams = {
           userId: row.userId,
-          email: row.email,
+          email: row.email
         };
         const { body: user } = await request(app).post('/users').send(requestParams);
         expect(user.id).toBe(row.id);
@@ -439,7 +447,7 @@ describe('POST /users', () => {
       User.create.mockResolvedValueOnce(row);
       const requestParms = {
         userId: row.userId,
-        email: row.email,
+        email: row.email
       };
       const response = await request(app).post('/users').send(requestParms);
       expect(response.headers['content-type']).toEqual(expect.stringContaining('json'));
@@ -452,7 +460,7 @@ describe('POST /users', () => {
       User.create.mockResolvedValueOnce(row);
       const requestParms = {
         userId: row.userId,
-        email: row.email,
+        email: row.email
       };
       const response = await request(app).post('/users').send(requestParms);
       expect(response.statusCode).toBe(201);
@@ -463,7 +471,7 @@ describe('POST /users', () => {
       const row = data[0];
       const requestParms = {
         userId: row.userId,
-        email: row.email,
+        email: row.email
       };
       User.findOne.mockResolvedValueOnce(row);
       User.create.mockResolvedValueOnce(row);
@@ -476,7 +484,7 @@ describe('POST /users', () => {
       const row = data[0];
       const requestParms = {
         userId: row.userId,
-        email: row.email,
+        email: row.email
       };
       User.findOne.mockResolvedValueOnce({});
       User.create.mockResolvedValueOnce(null);
@@ -489,7 +497,7 @@ describe('POST /users', () => {
       const row = data[0];
       const requestParms = {
         userId: row.userId,
-        email: row.email,
+        email: row.email
       };
       User.findOne.mockResolvedValueOnce(null);
       const response = await request(app).post('/users').send(requestParms);
@@ -501,7 +509,7 @@ describe('POST /users', () => {
       const row = data[0];
       const requestParms = {
         userId: row.userId,
-        email: row.email,
+        email: row.email
       };
       User.findOne.mockRejectedValueOnce(new Error('some database error'));
       const response = await request(app).post('/users').send(requestParms);
@@ -513,7 +521,7 @@ describe('POST /users', () => {
       const row = data[0];
       const requestParms = {
         userId: row.userId,
-        email: row.email,
+        email: row.email
       };
       User.findOne.mockResolvedValueOnce({});
       User.create.mockRejectedValueOnce(new Error('some database error'));

@@ -52,17 +52,17 @@ module.exports = () => {
       const user = await User.findOne({ id: id });
       
       if(isEmpty(user)) {
-        throw new HttpError.NotFound();
+        throw new HttpError.NotFound('A user with that id was not found.');
       }
 
-      if(isEmpty(req.body)) {
-        throw new HttpError.BadRequest();
+      if(isEmpty(req.body) || !req.body.senderId) {
+        throw new HttpError.BadRequest('Required parameters are missing');
       }
 
       const sender = await User.findOne({ id: req.body.senderId });
 
       if(!(sender.role === 'admin' || user.id === sender.id)) {
-        throw new HttpError.Forbidden();
+        throw new HttpError.Forbidden('You are not allowed to do this');
       }
 
       const updatedUser = await User.update(user.id, req.body);

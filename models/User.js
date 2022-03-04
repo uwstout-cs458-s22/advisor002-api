@@ -45,7 +45,7 @@ async function create(userId, email) {
       userId: userId,
       email: email,
       enable: enable,
-      role: role,
+      role: role
     });
 
     const res = await db.query(`INSERT INTO "user" ${text} RETURNING *;`, params);
@@ -56,14 +56,15 @@ async function create(userId, email) {
       return res.rows[0];
     }
     throw HttpError(500, 'Unexpected DB Condition, insert successful with no returned record');
-  } else {
+  }
+  else {
     throw HttpError(400, 'UserId and Email are required.');
   }
 }
 
 async function update(id, newUser) {
-  if(id && newUser) {
-    const {text, params} = updateValues({
+  if (id && newUser) {
+    const { text, params } = updateValues({
       role: newUser.role,
       enable: newUser.enable
     });
@@ -76,14 +77,15 @@ async function update(id, newUser) {
 
     paramList.push(id);
 
-    const res = await db.query(`UPDATE "user" ${text} WHERE id = $${n+1} RETURNING *;`, paramList);
+    const res = await db.query(`UPDATE "user" ${text} WHERE id = $${n + 1} RETURNING *;`, paramList);
 
-    if(res.rows.length > 0) {
-      log.debug(`Successfully updated user with id ${id} in the database with the data ${JSON.stringify(newUser)}`)
+    if (res.rows.length > 0) {
+      log.debug(`Successfully updated user with id ${id} in the database with the data ${JSON.stringify(newUser)}`);
       return res.rows[0];
     }
     throw HttpError(500, 'Unexpected DB condition, update successful with no returned record');
-  } else {
+  }
+  else {
     throw HttpError(400, 'Id and a put document are required');
   }
 }
@@ -92,5 +94,5 @@ module.exports = {
   findOne,
   findAll,
   create,
-  update,
+  update
 };

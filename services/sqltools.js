@@ -21,7 +21,7 @@ function insertValues(values) {
     const params = Object.values(values);
     return {
       text: `(${columns}) VALUES (${parmList})`,
-      params: params,
+      params: params
     };
   }
   return { text: '', params: [] };
@@ -41,7 +41,7 @@ function updateValues(values) {
 
     return {
       text: setupText,
-      params: params,
+      params: params
     };
   }
 
@@ -51,5 +51,5 @@ function updateValues(values) {
 module.exports = {
   whereParams: whereParams,
   insertValues: insertValues,
-  updateValues: updateValues,
+  updateValues: updateValues
 };

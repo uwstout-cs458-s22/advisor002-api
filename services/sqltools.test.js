@@ -32,7 +32,7 @@ describe('sql utility tests', () => {
 
     describe('updateValues tests', () => {
       test('updateValues with parameters', async () => {
-        const { text, params } = updateValues({column1: 1, column2: '2'});
+        const { text, params } = updateValues({ column1: 1, column2: '2' });
         expect(text).toBe('SET column1 = $1, column2 = $2');
         expect(params).toHaveLength(2);
         expect(params[0]).toBe(1);
@@ -58,7 +58,7 @@ describe('sql utility tests', () => {
         expect(text).toBe('');
         expect(params).toHaveLength(0);
       });
-    })
+    });
 
     describe('insertValues tests', () => {
       test('insertValues with parameters', async () => {
