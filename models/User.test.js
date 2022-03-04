@@ -268,16 +268,4 @@ describe('User Model', () => {
       expect(db.query.mock.calls).toHaveLength(0);
     });
   });
-
-  describe('delete a user', () => {
-    beforeEach(() => {
-      db.query.mockReset();
-      db.query.mockResolvedValue(null);
-    });
-
-    test('Program should respond with code 200 if successful', async () => {
-      // create a user and make sure it exists
-      // delete the user and make sure it throws code 200
-    });
-  });
 });
