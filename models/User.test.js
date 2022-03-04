@@ -1,5 +1,4 @@
 const log = require('loglevel');
-const { test } = require('stytch/types/lib/envs');
 const { db } = require('../services/database');
 const env = require('../services/environment');
 const User = require('./User');
