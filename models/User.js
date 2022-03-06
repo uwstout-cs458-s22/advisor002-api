@@ -70,9 +70,9 @@ async function deleteUser(userId, email) {
     const { text, params } = whereParams({ userId: userId });
     const res = await db.query(`DELETE FROM "user" ${text} RETURNING *;`, params);
     if (res.rows.length > 0) {
-      log.debug(`Successfully deleted user ${email} from db}`);
-      return res;
+      return (`Successfully deleted user from db`);
     }
+    throw HttpError(500,'Unexpected db condition, delete successful with no returned record');
   } else {
     throw HttpError(400, 'UserId and Email are required.');
   }
