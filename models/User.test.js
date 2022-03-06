@@ -1,5 +1,5 @@
 const log = require('loglevel');
-const { test } = require('stytch/types/lib/envs');
+// const { test } = require('stytch/types/lib/envs');
 const { db } = require('../services/database');
 const env = require('../services/environment');
 const User = require('./User');
@@ -33,6 +33,21 @@ function dataForGetUser(rows, offset = 0) {
       userId: `user-test-someguid${value}`,
       enable: 'true',
       role: 'user',
+    });
+  }
+  return data;
+}
+
+function dataForDeleteUser(rows, offset = 0) {
+  const data = [];
+  for (let i = 1; i <= rows; i++) {
+    const value = i + offset;
+    data.push({
+      id: `${value}`,
+      email: `email${value}@uwstout.edu`,
+      userId: `user-test-someguid${value}`,
+      enable: 'true',
+      role: 'admin',
     });
   }
   return data;
@@ -269,15 +284,17 @@ describe('User Model', () => {
     });
   });
 
-  describe('delete a user', () => {
-    beforeEach(() => {
-      db.query.mockReset();
-      db.query.mockResolvedValue(null);
-    });
+  describe('test deleteUser', () => {
 
-    test('Program should respond with code 200 if successful', async () => {
-      // create a user and make sure it exists
-      // delete the user and make sure it throws code 200
+    test('user deletes themself', async () => {
+      const data = dataForDeleteUser(1);
+      const row = data[0];
+      db.query.mockResolvedValue({ rows: data });
+      await User.create(row.userId, row.email);
+      await User.deleteUser(row.userId, row.email);
+      // expect(db.query.mock.calls[0][1]).toHaveLength(4);
+      // expect(db.query.mock.calls[0][1][0]).toBe(row.userId);
+      expect(User.findOne({ id: row.id})).toEqual("{}");
     });
   });
 });
