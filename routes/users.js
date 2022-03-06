@@ -4,7 +4,6 @@ const HttpError = require('http-errors');
 const { isEmpty } = require('./../services/utils');
 const User = require('./../models/User');
 const { authorizeSession } = require('./../services/auth');
-const { db } = require('../services/database');
 
 module.exports = () => {
   const router = express.Router();
