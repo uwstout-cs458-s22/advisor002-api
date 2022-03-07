@@ -46,6 +46,35 @@ module.exports = () => {
     }
   });
 
+  router.put('/:id(\\d+)', authorizeSession, async (req, res, next) => {
+    try {
+      const id = req.params.id;
+      const user = await User.findOne({ id: id });
+      
+      if(isEmpty(user)) {
+        throw new HttpError.NotFound('A user with that id was not found.');
+      }
+
+      if(isEmpty(req.body) || !req.body.senderId) {
+        throw new HttpError.BadRequest('Required parameters are missing');
+      }
+
+      const sender = await User.findOne({ id: req.body.senderId });
+
+      if(!(sender.role === 'admin' || user.id === sender.id)) {
+        throw new HttpError.Forbidden('You are not allowed to do this');
+      }
+
+      const updatedUser = await User.update(user.id, req.body);
+
+      res.setHeader('Location', `/users/${user.id}`);
+      return res.send(updatedUser);
+
+    } catch(error) {
+      next(error);
+    }
+  });
+
   router.post('/', authorizeSession, async (req, res, next) => {
     try {
       const userId = req.body.userId;
