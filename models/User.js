@@ -77,6 +77,8 @@ async function deleteUser(userId, email) {
     throw HttpError(500,'Unexpected db condition, delete successful with no returned record');
   } else {
     throw HttpError(400, 'UserId and Email are required.');
+  }
+}
 
 async function update(id, newUser) {
   if (id && newUser) {

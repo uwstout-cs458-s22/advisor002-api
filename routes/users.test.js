@@ -12,7 +12,7 @@ jest.mock('../models/User.js', () => {
     findOne: jest.fn(),
     findAll: jest.fn(),
     create: jest.fn(),
-    deleteUser: jest.fn()
+    deleteUser: jest.fn(),
     update: jest.fn()
   };
 });
