@@ -2,49 +2,49 @@ const express = require('express');
 const log = require('loglevel');
 const HttpError = require('http-errors');
 const { isEmpty } = require('./../services/utils');
-const User = require('./../models/Course');
+const Course = require('./../models/Course');
 const { authorizeSession } = require('./../services/auth');
 
 module.exports = () => {
   const router = express.Router();
+  
+  router.get('/', authorizeSession, async (req, res, next) => {
+    try {
+      const courses = await Course.findAll(null, req.query.limit, req.query.offset);
+      log.info(`${req.method} ${req.originalUrl} success: returning ${courses.length} course(s)`);
+      return res.send(courses);
+    } catch (error) {
+      next(error);
+    }
+  });
 
-  // router.get('/', authorizeSession, async (req, res, next) => {
-  //   try {
-  //     const users = await User.findAll(null, req.query.limit, req.query.offset);
-  //     log.info(`${req.method} ${req.originalUrl} success: returning ${users.length} user(s)`);
-  //     return res.send(users);
-  //   } catch (error) {
-  //     next(error);
-  //   }
-  // });
+  router.get('/:id(\\d+)', authorizeSession, async (req, res, next) => {
+    try {
+      const id = req.params.id;
+      const course = await Course.findOne({ id: id });
+      if (isEmpty(course)) {
+        throw new HttpError.NotFound();
+      }
+      log.info(`${req.method} ${req.originalUrl} success: returning course ${id}`);
+      return res.send(course);
+    } catch (error) {
+      next(error);
+    }
+  });
 
-  // router.get('/:id(\\d+)', authorizeSession, async (req, res, next) => {
-  //   try {
-  //     const id = req.params.id;
-  //     const user = await User.findOne({ id: id });
-  //     if (isEmpty(user)) {
-  //       throw new HttpError.NotFound();
-  //     }
-  //     log.info(`${req.method} ${req.originalUrl} success: returning user ${id}`);
-  //     return res.send(user);
-  //   } catch (error) {
-  //     next(error);
-  //   }
-  // });
-
-  // router.get('/:userId', authorizeSession, async (req, res, next) => {
-  //   try {
-  //     const userId = req.params.userId;
-  //     const user = await User.findOne({ userId: userId });
-  //     if (isEmpty(user)) {
-  //       throw new HttpError.NotFound();
-  //     }
-  //     log.info(`${req.method} ${req.originalUrl} success: returning user ${userId}`);
-  //     return res.send(user);
-  //   } catch (error) {
-  //     next(error);
-  //   }
-  // });
+  router.get('/:courseId', authorizeSession, async (req, res, next) => {
+    try {
+      const courseId = req.params.courseId;
+      const course = await Course.findOne({ courseId: courseId });
+      if (isEmpty(course)) {
+        throw new HttpError.NotFound();
+      }
+      log.info(`${req.method} ${req.originalUrl} success: returning course ${courseId}`);
+      return res.send(course);
+    } catch (error) {
+      next(error);
+    }
+  });
 
   // router.post('/', authorizeSession, async (req, res, next) => {
   //   try {
