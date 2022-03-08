@@ -1,7 +1,7 @@
 const HttpError = require('http-errors');
 const log = require('loglevel');
 const { db } = require('../services/database');
-const { whereParams, insertValues } = require('../services/sqltools');
+const { whereParams, insertValues, updateValues } = require('../services/sqltools');
 const env = require('../services/environment');
 
 // if found return { ... }
@@ -45,8 +45,9 @@ async function create(userId, email) {
       userId: userId,
       email: email,
       enable: enable,
-      role: role,
+      role: role
     });
+
     const res = await db.query(`INSERT INTO "user" ${text} RETURNING *;`, params);
     if (res.rows.length > 0) {
       log.debug(
@@ -54,8 +55,9 @@ async function create(userId, email) {
       );
       return res.rows[0];
     }
-    throw HttpError(500, 'Unexpected DB Condition, insert sucessful with no returned record');
-  } else {
+    throw HttpError(500, 'Unexpected DB Condition, insert successful with no returned record');
+  }
+  else {
     throw HttpError(400, 'UserId and Email are required.');
   }
 }
@@ -75,6 +77,33 @@ async function deleteUser(userId, email) {
     throw HttpError(500,'Unexpected db condition, delete successful with no returned record');
   } else {
     throw HttpError(400, 'UserId and Email are required.');
+
+async function update(id, newUser) {
+  if (id && newUser) {
+    const { text, params } = updateValues({
+      role: newUser.role,
+      enable: newUser.enable
+    });
+
+    const n = params.length;
+    const paramList = [];
+    params.forEach(x => {
+      paramList.push(x);
+    });
+
+    paramList.push(id);
+
+    const res = await db.query(`UPDATE "user" ${text} WHERE id = $${n + 1} RETURNING *;`, paramList);
+
+    if (res.rows.length > 0) {
+      log.debug(`Successfully updated user with id ${id} in the database with the data ${JSON.stringify(newUser)}`);
+      return res.rows[0];
+    }
+    throw HttpError(500, 'Unexpected DB condition, update successful with no returned record');
+  }
+  else {
+    throw HttpError(400, 'Id and a put document are required');
+
   }
 }
 
@@ -83,4 +112,5 @@ module.exports = {
   findAll,
   create,
   deleteUser,
+  update
 };

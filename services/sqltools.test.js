@@ -1,4 +1,4 @@
-const { whereParams, insertValues } = require('./sqltools');
+const { whereParams, insertValues, updateValues } = require('./sqltools');
 
 describe('sql utility tests', () => {
   describe('whereParams tests', () => {
@@ -28,6 +28,36 @@ describe('sql utility tests', () => {
       const { text, params } = whereParams();
       expect(text).toBe('');
       expect(params).toHaveLength(0);
+    });
+
+    describe('updateValues tests', () => {
+      test('updateValues with parameters', async () => {
+        const { text, params } = updateValues({ column1: 1, column2: '2' });
+        expect(text).toBe('SET column1 = $1, column2 = $2');
+        expect(params).toHaveLength(2);
+        expect(params[0]).toBe(1);
+        expect(params[1]).toBe('2');
+      });
+      test('updateValues with empty dictionary', async () => {
+        const { text, params } = updateValues({});
+        expect(text).toBe('');
+        expect(params).toHaveLength(0);
+      });
+      test('updateValues with array parameter', async () => {
+        const { text, params } = updateValues([]);
+        expect(text).toBe('');
+        expect(params).toHaveLength(0);
+      });
+      test('updateValues with bad parameter', async () => {
+        const { text, params } = updateValues(1234);
+        expect(text).toBe('');
+        expect(params).toHaveLength(0);
+      });
+      test('updateValues with no parameters', async () => {
+        const { text, params } = updateValues();
+        expect(text).toBe('');
+        expect(params).toHaveLength(0);
+      });
     });
 
     describe('insertValues tests', () => {

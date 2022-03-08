@@ -17,5 +17,5 @@ module.exports = {
   isEmpty,
   isArray,
   isObject,
-  isString,
+  isString
 };
