@@ -12,6 +12,7 @@ jest.mock('../models/User.js', () => {
     findOne: jest.fn(),
     findAll: jest.fn(),
     create: jest.fn(),
+    deleteUser: jest.fn(),
     update: jest.fn()
   };
 });
@@ -549,4 +550,64 @@ describe('POST /users', () => {
       expect(response.statusCode).toBe(400);
     });
   });
+});
+
+describe('DELETE /users', () => {
+  beforeEach(() => {
+    User.create.mockReset();
+    User.create.mockResolvedValue(null);
+    User.findOne.mockReset();
+    User.findOne.mockResolvedValue(null);
+    User.findAll.mockReset();
+    User.findAll.mockResolvedValue(null);
+  });
+
+test('Program should respond with code 400 if query is invalid', async () => {
+  const data = dataForGetUser(1);
+  const row = data[0];
+  await User.create(row.userId, row.email);
+  const response = await request(app).delete('/users').send({ email: 'email1@uwstout.edu' });
+  expect(response.statusCode).toBe(400);
+  });
+
+test('Program should respond with code 404 if user is empty', async () =>  {
+  User.findOne.mockResolvedValueOnce({}).mockResolvedValueOnce({})
+  const response = await request(app).delete('/users').send({userId: 10810, email: "something@moveBy.uwstout.edu"});
+  expect(response.statusCode).toBe(404);
+});
+
+test('Program should respond with code 403 if user is not admin or themself', async () =>  {
+  User.findOne.mockResolvedValueOnce({id: `12345`,
+  email: `emailmine@uwstout.edu`,
+  userId: `user-test-someguid`,
+  enable: 'false',
+  role: 'user'}).mockResolvedValueOnce({id: `5457846`,
+  email: `emailanotheremail@uwstout.edu`,
+  userId: `user-test-someguid14237`,
+  enable: 'false',
+  role: 'user'})
+
+  const response = await request(app).delete('/users').send({userId: 12345, email: "emailanotheremail@uwstout.edu"});
+  expect(response.statusCode).toBe(403);
+});
+
+test('Program should respond with code 200 if user is not admin or themself', async () =>  {
+  User.findOne.mockResolvedValueOnce({id: 12345,
+  email: `emailmine@uwstout.edu`,
+  userId: `user-test-someguid`,
+  enable: 'false',
+  role: 'admin'}).mockResolvedValueOnce({id: 5457846,
+  email: `emailanotheremail@uwstout.edu`,
+  userId: `user-test-someguid14237`,
+  enable: 'false',
+  role: 'user'})
+
+  User.deleteUser.mockResolvedValueOnce(`Successfully deleted user from db`);
+
+  const response = await request(app).delete('/users').send({userId: 12345, email: "emailmine@uwstout.edu"});
+  expect(response.statusCode).toBe(200);
+});
+
+
+
 });
