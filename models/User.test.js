@@ -37,6 +37,21 @@ function dataForGetUser(rows, offset = 0) {
   return data;
 }
 
+function dataForDeleteUser(rows, offset = 0) {
+  const data = [];
+  for (let i = 1; i <= rows; i++) {
+    const value = i + offset;
+    data.push({
+      id: `${value}`,
+      email: `email${value}@uwstout.edu`,
+      userId: `user-test-someguid${value}`,
+      enable: 'true',
+      role: 'admin',
+    });
+  }
+  return data;
+}
+
 describe('User Model', () => {
   beforeEach(() => {
     db.query.mockReset();
@@ -321,6 +336,32 @@ describe('User Model', () => {
     test('User.create with no input', async () => {
       await expect(User.create()).rejects.toThrowError('UserId and Email are required.');
       expect(db.query.mock.calls).toHaveLength(0);
+    });
+  });
+
+  describe('test deleteUser', () => {
+
+    test('user deletes themself', async () => {
+      const data = dataForDeleteUser(1);
+      const row = data[0];
+      db.query.mockResolvedValue({ rows: data });
+      await User.create(row.userId, row.email);
+      expect(await User.deleteUser(row.userId, row.email)).toBe(`Successfully deleted user from db`);
+    });
+
+    test('user id or email not found', async () => {
+      const data = dataForDeleteUser(1);
+      const row = data[0];
+      db.query.mockResolvedValue({ rows: data });
+      await User.create(row.userId, row.email);
+      await expect(User.deleteUser(row.email)).rejects.toThrowError('UserId and Email are required.');
+    });
+
+    test('user deletes themself but no response returned', async () => {
+      const data = dataForDeleteUser(1);
+      const row = data[0];
+      db.query.mockResolvedValue({ rows: []});
+      await expect(User.deleteUser(row.userId, row.email)).rejects.toThrowError('Unexpected db condition, delete successful with no returned record');
     });
   });
 });

@@ -62,6 +62,24 @@ async function create(userId, email) {
   }
 }
 
+// if successful, user is delted.
+// if db error, db.query will throw a rejected promise
+// userId refers to the user being deleted
+// email is used to check for admin role on the deleter
+async function deleteUser(userId, email) {
+  // email is required
+  if (userId && email) {
+    const { text, params } = whereParams({ userId: userId });
+    const res = await db.query(`DELETE FROM "user" ${text} RETURNING *;`, params);
+    if (res.rows.length > 0) {
+      return (`Successfully deleted user from db`);
+    }
+    throw HttpError(500,'Unexpected db condition, delete successful with no returned record');
+  } else {
+    throw HttpError(400, 'UserId and Email are required.');
+  }
+}
+
 async function update(id, newUser) {
   if (id && newUser) {
     const { text, params } = updateValues({
@@ -87,6 +105,7 @@ async function update(id, newUser) {
   }
   else {
     throw HttpError(400, 'Id and a put document are required');
+
   }
 }
 
@@ -94,5 +113,6 @@ module.exports = {
   findOne,
   findAll,
   create,
+  deleteUser,
   update
 };
