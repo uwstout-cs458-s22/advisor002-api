@@ -40,6 +40,33 @@ function dataForGetCourse(rows, offset = 0) {
   return data;
 }
 
+
+// describe('GET /Course', () => {
+
+// // helper functions - id is a numeric value
+// async function callGetOnCourseRoute(row, key = 'id') {
+//   const id = row[key];
+//   Course.findOneCourse.mockResolvedValueOnce(row);
+//   const response = await request(app).get(`/courses/${id}`);
+//   return response;
+// }
+// // helper functions - userId is a text value
+
+// describe('given a row id', () => {
+//   test('should make a call to Course.findOneCOurse', async () => {
+//     const row = dataForGetCourse(1)[0];
+//     // await callGetOnCourseRoute(row);
+//     expect(Course.findOneCourse.mock.calls).toHaveLength(1);
+//     expect(Course.findOneCourse.mock.calls[0]).toHaveLength(1);
+//     expect(Course.findOneCourse.mock.calls[0][0]).toHaveProperty('id', row.id);
+//   });
+
+
+
+// });
+
+
+
 describe('Course Model', () => {
   beforeEach(() => {
     db.query.mockReset();
@@ -47,11 +74,38 @@ describe('Course Model', () => {
   });
 
 
-  // Skipping testing for creating, findAll, etc
+  // describe('querying a single course by id', () => {
+
+
+
 
 
 
   describe('Edit a Course', () => {
+
+    test('findOneCourse with valid ID', async () => {
+      const row = dataForGetCourse(1)[0];
+      db.query.mockResolvedValue({
+        rows: [row]
+      });
+      await Course.findOneCourse({
+        id: row.id
+      });
+      expect(db.query.mock.calls).toHaveLength(1);
+      expect(db.query.mock.calls[0][1][0]).toBe(row.id);
+    });
+
+    test('findOneCourse with invalid ID', async () => {
+      db.query.mockResolvedValue({
+        rows: []
+      });
+      await Course.findOneCourse({
+        id: 2
+      });
+      expect(db.query.mock.calls).toHaveLength(0); // Should be empty because course not found
+    });
+
+
     test('Edit a course to have name NewCourse and major NewMajor', async () => {
       const data = dataForGetCourse(1);
       const row = data[0];
@@ -59,7 +113,9 @@ describe('Course Model', () => {
       row.name = "OldCourse"
       const putDoc = {
         name: 'NewCourse',
-        major: 'NewMajor'
+        major: 'NewMajor',
+        credits: row.credits,
+        semester: row.semester
       };
 
       db.query.mockResolvedValue({
@@ -69,9 +125,9 @@ describe('Course Model', () => {
       expect(db.query.mock.calls).toHaveLength(1);
       expect(db.query.mock.calls[0]).toHaveLength(2);
       expect(db.query.mock.calls[0][0]).toBe(
-        'UPDATE "course" SET name = $1, major =$2 WHERE id = $3 RETURNING *;'
+        'UPDATE "course" SET name = $1, major = $2, credits = $3, semester = $4 WHERE id = $5 RETURNING *;'
       );
-      expect(db.query.mock.calls[0][1]).toHaveLength(3);
+      expect(db.query.mock.calls[0][1]).toHaveLength(5);
       expect(db.query.mock.calls[0][1][0]).toBe(putDoc.name);
       expect(db.query.mock.calls[0][1][1]).toBe(putDoc.major);
     });
@@ -79,25 +135,10 @@ describe('Course Model', () => {
     test('Throw 500 error', async () => {
       const data = dataForGetCourse(1);
       const row = data[0];
-      row.id = 123;
-      row.name = "OldCourse"
-      const putDoc = {
-        name: 'NewCourse',
-        major: 'NewMajor'
-      };
-
       db.query.mockResolvedValue({ // empty
         rows: []
       });
-      await expect(Course.editCourse(row.id, putDoc)).rejects.toThrowError('Unexpected DB condition, update successful with no returned record');
-      expect(db.query.mock.calls).toHaveLength(1);
-      expect(db.query.mock.calls[0]).toHaveLength(2);
-      expect(db.query.mock.calls[0][0]).toBe(
-        'UPDATE "course" SET name = $1, major = $2 WHERE id = $3 RETURNING *;'
-      );
-      expect(db.query.mock.calls[0][1]).toHaveLength(3);
-      expect(db.query.mock.calls[0][1][0]).toBe(putDoc.name);
-      expect(db.query.mock.calls[0][1][1]).toBe(putDoc.major);
+      await expect(Course.editCourse(row.id, data)).rejects.toThrowError('Unexpected DB condition, update successful with no returned record');
     });
 
     test('editCourse with no input', async () => {

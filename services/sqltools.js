@@ -43,7 +43,7 @@ function updateValues(values) {
 
     let setText = 'SET ';
     let count = 1;
-    columns.forEach((x) => {
+    columns.forEach(x => {
       setText += count === columns.length ? `${x} = $${count}` : `${x} = $${count}, `;
       count++;
     });
