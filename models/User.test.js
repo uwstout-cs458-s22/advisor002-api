@@ -132,7 +132,7 @@ describe('User Model', () => {
     test('should make a call to User.findAll - with criteria, with limits, no offsets', async () => {
       const data = dataForGetUser(3);
       db.query.mockResolvedValue({ rows: data });
-      const users = await User.findAll({ role: 'user', enable: true }, 3);
+      const users = await User.findAll({ role: 'user', enable: true }, null, 3);
       expect(db.query.mock.calls).toHaveLength(1);
       expect(db.query.mock.calls[0]).toHaveLength(2);
       expect(db.query.mock.calls[0][0]).toBe(
@@ -154,7 +154,7 @@ describe('User Model', () => {
     test('should make a call to User.findAll - with criteria, with limits, with offsets', async () => {
       const data = dataForGetUser(3, 1);
       db.query.mockResolvedValue({ rows: data });
-      const users = await User.findAll({ role: 'user', enable: true }, 3, 1);
+      const users = await User.findAll({ role: 'user', enable: true }, null, 3, 1);
       expect(db.query.mock.calls).toHaveLength(1);
       expect(db.query.mock.calls[0]).toHaveLength(2);
       expect(db.query.mock.calls[0][0]).toBe(
