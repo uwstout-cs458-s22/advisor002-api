@@ -9,7 +9,9 @@ const env = require('../services/environment');
 // if db error, db.query will throw a rejected promise
 async function findOne(criteria) {
   const { text, params } = whereParams(criteria);
+
   const res = await db.query(`SELECT * from "user" ${text} LIMIT 1;`, params);
+
   if (res.rows.length > 0) {
     log.debug(`Successfully found user from db with criteria: ${text}, ${JSON.stringify(params)}`);
     return res.rows[0];
@@ -21,8 +23,8 @@ async function findOne(criteria) {
 // if found return [ {}, {} ... ]
 // if not found return []
 // if db error, db.query will throw a rejected promise
-async function findAll(criteria, limit = 100, offset = 0) {
-  const { text, params } = whereParams(criteria);
+async function findAll(criteria, query = null, limit = 100, offset = 0) {
+  const { text, params } = whereParams(criteria, query);
   const n = params.length;
   const p = params.concat([limit, offset]);
   const res = await db.query(`SELECT * from "user" ${text} LIMIT $${n + 1} OFFSET $${n + 2};`, p);
@@ -114,5 +116,5 @@ module.exports = {
   findAll,
   create,
   deleteUser,
-  update
+  update,
 };

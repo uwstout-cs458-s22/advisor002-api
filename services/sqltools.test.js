@@ -9,6 +9,20 @@ describe('sql utility tests', () => {
       expect(params[0]).toBe(1);
       expect(params[1]).toBe('2');
     });
+    test('whereParams with parameters (query and criteria)', async () => {
+      const { text, params } = whereParams({ column1: 1, column2: '2' }, 'jacob');
+      expect(text).toBe('WHERE email LIKE \'%\' || $1 || \'%\' AND "column1"=$2 AND "column2"=$3');
+      expect(params).toHaveLength(3);
+      expect(params[0]).toBe('jacob');
+      expect(params[1]).toBe(1);
+      expect(params[2]).toBe('2');
+    });
+    test('whereParams with parameters (just query)', async () => {
+      const { text, params } = whereParams({}, 'jacob');
+      expect(text).toBe('WHERE email LIKE \'%\' || $1 || \'%\'');
+      expect(params).toHaveLength(1);
+      expect(params[0]).toBe('jacob');
+    });
     test('whereParams with empty dictionary', async () => {
       const { text, params } = whereParams({});
       expect(text).toBe('');

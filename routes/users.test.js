@@ -167,10 +167,11 @@ describe('GET /users', () => {
       User.findAll.mockResolvedValueOnce(data);
       await request(app).get('/users');
       expect(User.findAll.mock.calls).toHaveLength(1);
-      expect(User.findAll.mock.calls[0]).toHaveLength(3);
-      expect(User.findAll.mock.calls[0][0]).toBeNull();
-      expect(User.findAll.mock.calls[0][1]).toBeUndefined();
+      expect(User.findAll.mock.calls[0]).toHaveLength(4);
+      expect(User.findAll.mock.calls[0][0]).toStrictEqual({});
+      expect(User.findAll.mock.calls[0][1]).toBeNull();
       expect(User.findAll.mock.calls[0][2]).toBeUndefined();
+      expect(User.findAll.mock.calls[0][3]).toBeUndefined();
     });
 
     test('should make a call to findAll - with limits', async () => {
@@ -178,10 +179,11 @@ describe('GET /users', () => {
       User.findAll.mockResolvedValueOnce(data);
       await request(app).get('/users?limit=3');
       expect(User.findAll.mock.calls).toHaveLength(1);
-      expect(User.findAll.mock.calls[0]).toHaveLength(3);
-      expect(User.findAll.mock.calls[0][0]).toBeNull();
-      expect(User.findAll.mock.calls[0][1]).toBe('3');
-      expect(User.findAll.mock.calls[0][2]).toBeUndefined();
+      expect(User.findAll.mock.calls[0]).toHaveLength(4);
+      expect(User.findAll.mock.calls[0][0]).toStrictEqual({});
+      expect(User.findAll.mock.calls[0][1]).toBeNull();
+      expect(User.findAll.mock.calls[0][2]).toBe('3');
+      expect(User.findAll.mock.calls[0][3]).toBeUndefined();
     });
 
     test('should make a call to findAll - with offset', async () => {
@@ -189,10 +191,11 @@ describe('GET /users', () => {
       User.findAll.mockResolvedValueOnce(data);
       await request(app).get('/users?offset=1');
       expect(User.findAll.mock.calls).toHaveLength(1);
-      expect(User.findAll.mock.calls[0]).toHaveLength(3);
-      expect(User.findAll.mock.calls[0][0]).toBeNull();
-      expect(User.findAll.mock.calls[0][1]).toBeUndefined();
-      expect(User.findAll.mock.calls[0][2]).toBe('1');
+      expect(User.findAll.mock.calls[0]).toHaveLength(4);
+      expect(User.findAll.mock.calls[0][0]).toStrictEqual({});
+      expect(User.findAll.mock.calls[0][1]).toBeNull();
+      expect(User.findAll.mock.calls[0][2]).toBeUndefined();
+      expect(User.findAll.mock.calls[0][3]).toBe('1');
     });
 
     test('should make a call to findAll- with limit and offset', async () => {
@@ -200,10 +203,59 @@ describe('GET /users', () => {
       User.findAll.mockResolvedValueOnce(data);
       await request(app).get('/users?limit=3&offset=1');
       expect(User.findAll.mock.calls).toHaveLength(1);
-      expect(User.findAll.mock.calls[0]).toHaveLength(3);
-      expect(User.findAll.mock.calls[0][0]).toBeNull();
-      expect(User.findAll.mock.calls[0][1]).toBe('3');
-      expect(User.findAll.mock.calls[0][2]).toBe('1');
+      expect(User.findAll.mock.calls[0]).toHaveLength(4);
+      expect(User.findAll.mock.calls[0][0]).toStrictEqual({});
+      expect(User.findAll.mock.calls[0][1]).toBeNull();
+      expect(User.findAll.mock.calls[0][2]).toBe('3');
+      expect(User.findAll.mock.calls[0][3]).toBe('1');
+    });
+
+    test('should make a call to findAll- with query and no limit or offset', async () => {
+      const data = dataForGetUser(3, 1);
+      User.findAll.mockResolvedValueOnce(data);
+      await request(app).get('/users?query=jacob');
+      expect(User.findAll.mock.calls).toHaveLength(1);
+      expect(User.findAll.mock.calls[0]).toHaveLength(4);
+      expect(User.findAll.mock.calls[0][0]).toStrictEqual({});
+      expect(User.findAll.mock.calls[0][1]).toBe('jacob');
+      expect(User.findAll.mock.calls[0][2]).toBeUndefined();
+      expect(User.findAll.mock.calls[0][3]).toBeUndefined();
+    });
+
+    test('should make a call to findAll- with query and limit and no offset', async () => {
+      const data = dataForGetUser(3, 1);
+      User.findAll.mockResolvedValueOnce(data);
+      await request(app).get('/users?query=jacob&limit=100');
+      expect(User.findAll.mock.calls).toHaveLength(1);
+      expect(User.findAll.mock.calls[0]).toHaveLength(4);
+      expect(User.findAll.mock.calls[0][0]).toStrictEqual({});
+      expect(User.findAll.mock.calls[0][1]).toBe('jacob');
+      expect(User.findAll.mock.calls[0][2]).toBe('100');
+      expect(User.findAll.mock.calls[0][3]).toBeUndefined();
+    });
+
+    test('should make a call to findAll- with query and limit and offset', async () => {
+      const data = dataForGetUser(3, 1);
+      User.findAll.mockResolvedValueOnce(data);
+      await request(app).get('/users?query=jacob&limit=100&offset=10');
+      expect(User.findAll.mock.calls).toHaveLength(1);
+      expect(User.findAll.mock.calls[0]).toHaveLength(4);
+      expect(User.findAll.mock.calls[0][0]).toStrictEqual({});
+      expect(User.findAll.mock.calls[0][1]).toBe('jacob');
+      expect(User.findAll.mock.calls[0][2]).toBe('100');
+      expect(User.findAll.mock.calls[0][3]).toBe('10');
+    });
+
+    test('should make a call to findAll- with query and criteria and limit and offset', async () => {
+      const data = dataForGetUser(3, 1);
+      User.findAll.mockResolvedValueOnce(data);
+      await request(app).get('/users?role=admin&enable=true&query=jacob&limit=100&offset=10');
+      expect(User.findAll.mock.calls).toHaveLength(1);
+      expect(User.findAll.mock.calls[0]).toHaveLength(4);
+      expect(User.findAll.mock.calls[0][0]).toStrictEqual({role: 'admin', enable: true});
+      expect(User.findAll.mock.calls[0][1]).toBe('jacob');
+      expect(User.findAll.mock.calls[0][2]).toBe('100');
+      expect(User.findAll.mock.calls[0][3]).toBe('10');
     });
 
     test('should respond with a json array object containg the user data', async () => {
