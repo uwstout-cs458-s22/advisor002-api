@@ -11,7 +11,7 @@ function whereParams(values, query) {
     });
 
     return {text:text, params: params}
-  } else if(query && Object.keys(values).length == 0) {
+  } else if(query && Object.keys(values).length === 0) {
     const text = `WHERE email LIKE '%' || $1 || '%'`;
 
     return {text: text, params: [query]}
