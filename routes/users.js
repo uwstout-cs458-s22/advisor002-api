@@ -12,8 +12,15 @@ module.exports = () => {
     try {
       const criteria = {};
       const query = req.query.query ? req.query.query : null;
-      req.query.enable ? criteria.enable = (req.query.enable === 'true') : null;
-      req.query.role ? criteria.role = req.query.role : null;
+
+      if(req.query.enable) {
+        criteria.enable = (req.query.enable === 'true');
+      }
+
+      if(req.query.role) {
+        criteria.role = req.query.role;
+      }
+      
       let users = [];
 
       users = await User.findAll(criteria, query, req.query.limit, req.query.offset);
