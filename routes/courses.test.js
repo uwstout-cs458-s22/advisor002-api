@@ -1,79 +1,82 @@
-// const log = require('loglevel');
+const log = require('loglevel');
 // const request = require('supertest');
 // const app = require('../app')();
-// const User = require('../models/User');
+const Course = require('../models/Course');
 
-// beforeAll(() => {
-//   log.disableAll();
-// });
+beforeAll(() => {
+  log.disableAll();
+});
 
-// jest.mock('../models/User.js', () => {
-//   return {
-//     findOne: jest.fn(),
-//     findAll: jest.fn(),
-//     create: jest.fn(),
-//   };
-// });
+jest.mock('../models/Courses.js', () => {
+  return {
+    findOne: jest.fn(),
+    findAll: jest.fn(),
+    create: jest.fn(),
+  };
+});
 
-// jest.mock('../services/environment', () => {
-//   return {
-//     port: 3001,
-//     stytchProjectId: 'project-test-11111111-1111-1111-1111-111111111111',
-//     stytchSecret: 'secret-test-111111111111',
-//     masterAdminEmail: 'master@gmail.com',
-//   };
-// });
+jest.mock('../services/environment', () => {
+  return {
+    port: 3001,
+    stytchProjectId: 'project-test-11111111-1111-1111-1111-111111111111',
+    stytchSecret: 'secret-test-111111111111',
+    masterAdminEmail: 'master@gmail.com',
+  };
+});
 
-// jest.mock('../services/auth', () => {
-//   return {
-//     authorizeSession: jest.fn().mockImplementation((req, res, next) => {
-//       return next();
-//     }),
-//   };
-// });
+jest.mock('../services/auth', () => {
+  return {
+    authorizeSession: jest.fn().mockImplementation((req, res, next) => {
+      return next();
+    }),
+  };
+});
 
-// // a helper that creates an array structure for getUserById
-// function dataForGetUser(rows, offset = 0) {
+// NEEDS DATABASE SCHEME
+// a helper that creates an array structure for getUserById
+// function dataForGetCourse(rows, offset = 0) {
 //   const data = [];
 //   for (let i = 1; i <= rows; i++) {
 //     const value = i + offset;
 //     data.push({
 //       id: `${value}`,
-//       email: `email${value}@uwstout.edu`,
-//       userId: `user-test-someguid${value}`,
-//       enable: 'false',
-//       role: 'user',
+//     //   email: `email${value}@uwstout.edu`,
+//     //   userId: `user-test-someguid${value}`,
+//     //   enable: 'false',
+//     //   role: 'user',
 //     });
 //   }
 //   return data;
 // }
 
-// describe('GET /users', () => {
-//   beforeEach(() => {
-//     User.create.mockReset();
-//     User.create.mockResolvedValue(null);
-//     User.findOne.mockReset();
-//     User.findOne.mockResolvedValue(null);
-//     User.findAll.mockReset();
-//     User.findAll.mockResolvedValue(null);
-//   });
+describe('GET /courses', () => {
+  beforeEach(() => {
+    Course.create.mockReset();
+    Course.create.mockResolvedValue(null);
+    Course.findOne.mockReset();
+    Course.findOne.mockResolvedValue(null);
+    Course.findAll.mockReset();
+    Course.findAll.mockResolvedValue(null);
+  });
 
-//   // helper functions - id is a numeric value
-//   async function callGetOnUserRoute(row, key = 'id') {
+  // helper functions - id is a numeric value
+//   async function callGetOnCourseRoute(row, key = 'id') {
 //     const id = row[key];
-//     User.findOne.mockResolvedValueOnce(row);
-//     const response = await request(app).get(`/users/${id}`);
+//     Course.findOne.mockResolvedValueOnce(row);
+//     const response = await request(app).get(`/courses/${id}`);
 //     return response;
 //   }
-//   // helper functions - userId is a text value
 
+// NEEDS DATABASE SCHEME
+
+// helper functions - userId is a text value
 //   describe('given a row id', () => {
-//     test('should make a call to User.findOne', async () => {
+//     test('should make a call to Course.findOne', async () => {
 //       const row = dataForGetUser(1)[0];
-//       await callGetOnUserRoute(row);
-//       expect(User.findOne.mock.calls).toHaveLength(1);
-//       expect(User.findOne.mock.calls[0]).toHaveLength(1);
-//       expect(User.findOne.mock.calls[0][0]).toHaveProperty('id', row.id);
+//       await callGetOnCourseRoute(row);
+//       expect(Course.findOne.mock.calls).toHaveLength(1);
+//       expect(Course.findOne.mock.calls[0]).toHaveLength(1);
+//       expect(Course.findOne.mock.calls[0][0]).toHaveProperty('id', row.id);
 //     });
 
 //     test('should respond with a json object containg the user data', async () => {
@@ -409,4 +412,4 @@
 //       expect(response.statusCode).toBe(400);
 //     });
 //   });
-// });
+});
