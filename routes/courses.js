@@ -49,11 +49,15 @@ module.exports = () => {
 
   router.delete('/:courseId', authorizeSession, async (req, res, next) => {
     try {
-      const user = await User.findOne({ id: userId });
-      if (user.role !== 'director') {
-        return res.status(403)
-      }
+      const userId = req.body[0].userId;
       const courseId = req.params.courseId;
+      const user = await User.findOne({ id: userId });
+      if (!userId || !courseId) {
+        throw HttpError(400, 'Required Parameters Missing');
+      }
+      if (user.role !== 'director') {
+        throw HttpError(400, 'Access Denied');
+      }
       const course = await Course.remove({ courseId: courseId });
       if (isEmpty(course)) {
         throw new HttpError.NotFound();
