@@ -48,6 +48,10 @@ module.exports = () => {
 
   router.delete('/:courseId', authorizeSession, async (req, res, next) => {
     try {
+      const user = await User.findOne({ id: userId });
+      if (user.role !== 'director') {
+        return res.status(403)
+      }
       const courseId = req.params.courseId;
       const course = await Course.remove({ courseId: courseId });
       if (isEmpty(course)) {
