@@ -55,7 +55,7 @@ module.exports = () => {
       if (!userId || !courseId) {
         throw HttpError(400, 'Required Parameters Missing');
       }
-      if (user.role !== 'director') {
+      if (user.role !== 'director') {   // Does not seem secure
         throw HttpError(400, 'Access Denied');
       }
       const course = await Course.remove({ courseId: courseId });
