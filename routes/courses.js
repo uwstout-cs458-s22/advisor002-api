@@ -3,6 +3,7 @@ const log = require('loglevel');
 const HttpError = require('http-errors');
 const { isEmpty } = require('./../services/utils');
 const Course = require('./../models/Course');
+const User = require('./../models/User');
 const { authorizeSession } = require('./../services/auth');
 
 module.exports = () => {
