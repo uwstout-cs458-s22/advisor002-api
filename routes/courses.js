@@ -46,6 +46,19 @@ module.exports = () => {
     }
   });
 
+  router.delete('/:courseId', authorizeSession, async (req, res, next) => {
+    try {
+      const courseId = req.params.courseId;
+      const course = await Course.remove({ courseId: courseId });
+      if (isEmpty(course)) {
+        throw new HttpError.NotFound();
+      }
+      return res.send(course);
+    } catch (error) {
+      next(error);
+    }
+  });
+
   // router.post('/', authorizeSession, async (req, res, next) => {
   //   try {
   //     const userId = req.body.userId;
