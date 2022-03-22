@@ -29,6 +29,7 @@ jest.mock('../services/environment', () => {
 jest.mock('../services/auth', () => {
   return {
     authorizeSession: jest.fn().mockImplementation((req, res, next) => {
+      res.locals.userId = 'user-test-thingy';
       return next();
     })
   };
@@ -327,7 +328,6 @@ describe('PUT /users', () => {
           userId: 'user-test-thingy'
         };
         const requestParams = {
-          senderId: requestor.id,
           userId: row.userId,
           email: row.email
         };
@@ -344,7 +344,7 @@ describe('PUT /users', () => {
         await request(app).put(`/users/${row.id}`).send(requestParams);
         expect(User.findOne.mock.calls).toHaveLength((i + 1) * 2);
         expect(User.findOne.mock.calls[i]).toHaveLength(1);
-        expect([row.id, requestor.id]).toContain(User.findOne.mock.calls[i + 1][0].id);
+        expect([User.findOne.mock.calls[i+1][0].userId, User.findOne.mock.calls[i][0].userId]).toContain(requestor.userId);
         expect(User.update.mock.calls).toHaveLength(i + 1);
         expect(User.update.mock.calls[i]).toHaveLength(2);
         expect(User.update.mock.calls[i][0]).toBe(row.id);
@@ -410,8 +410,7 @@ describe('PUT /users', () => {
         enable: true,
         role: 'admin'
       };
-      User.findOne.mockResolvedValueOnce({});
-      User.update.mockRejectedValueOnce(new Error(''));
+      User.findOne.mockResolvedValueOnce({}).mockResolvedValueOnce({});
       const response = await request(app).put('/users/1').send(requestParams);
       expect(response.statusCode).toBe(404);
     });
