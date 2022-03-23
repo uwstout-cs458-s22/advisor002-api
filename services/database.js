@@ -17,7 +17,16 @@ function initialize() {
         "userId" text,
         PRIMARY KEY (id)
       );
-      CREATE INDEX IF NOT EXISTS "IDX_user_userId" ON "user" ("userId");`,
+      CREATE INDEX IF NOT EXISTS "IDX_user_userId" ON "user" ("userId");
+      
+      CREATE TABLE IF NOT EXISTS "course" (
+        id serial,
+        courseId integer,
+        name text,
+        credits integer,
+        PRIMARY KEY (id)
+      );
+      CREATE INDEX IF NOT EXISTS "IDX_course_id" ON "course" ("id");`,
     (err, res) => {
       if (err) {
         throw err;
