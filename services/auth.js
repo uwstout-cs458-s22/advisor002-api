@@ -13,14 +13,16 @@ async function authorizeSession(req, res, next) {
         `${req.method} ${req.originalUrl} success: authorizeSession validated token ${token}`
       );
       next();
-    } catch (err) {
+    }
+    catch (err) {
       next(HttpError(err.status_code, `Authorization Failed: ${err.error_message}`));
     }
-  } else {
+  }
+  else {
     next(HttpError(401, 'Authorization of User Failed: No Token'));
   }
 }
 
 module.exports = {
-  authorizeSession,
+  authorizeSession
 };
