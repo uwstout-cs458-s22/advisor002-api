@@ -49,15 +49,15 @@ jest.mock('../services/auth', () => {
 //   return data;
 // }
 
-describe('GET /courses', () => {
-  beforeEach(() => {
-    Course.create.mockReset();
-    Course.create.mockResolvedValue(null);
-    Course.findOne.mockReset();
-    Course.findOne.mockResolvedValue(null);
-    Course.findAll.mockReset();
-    Course.findAll.mockResolvedValue(null);
-  });
+// describe('GET /courses', () => {
+//   beforeEach(() => {
+//     Course.create.mockReset();
+//     Course.create.mockResolvedValue(null);
+//     Course.findOne.mockReset();
+//     Course.findOne.mockResolvedValue(null);
+//     Course.findAll.mockReset();
+//     Course.findAll.mockResolvedValue(null);
+//   });
 
   // helper functions - id is a numeric value
 //   async function callGetOnCourseRoute(row, key = 'id') {
@@ -412,4 +412,4 @@ describe('GET /courses', () => {
 //       expect(response.statusCode).toBe(400);
 //     });
 //   });
-});
+// });
