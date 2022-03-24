@@ -32,42 +32,38 @@ jest.mock('../services/auth', () => {
   };
 });
 
-// NEEDS DATABASE SCHEME
 // a helper that creates an array structure for getUserById
-// function dataForGetCourse(rows, offset = 0) {
-//   const data = [];
-//   for (let i = 1; i <= rows; i++) {
-//     const value = i + offset;
-//     data.push({
-//       id: `${value}`,
-//     //   email: `email${value}@uwstout.edu`,
-//     //   userId: `user-test-someguid${value}`,
-//     //   enable: 'false',
-//     //   role: 'user',
-//     });
-//   }
-//   return data;
-// }
+function dataForGetCourse(rows, offset = 0) {
+  const data = [];
+  for (let i = 1; i <= rows; i++) {
+    const value = i + offset;
+    data.push({
+      id: `${value}`,
+      courseId: 1,
+      name: 'test',
+      credits: 4,
+    });
+  }
+  return data;
+}
 
-// describe('GET /courses', () => {
-//   beforeEach(() => {
-//     Course.create.mockReset();
-//     Course.create.mockResolvedValue(null);
-//     Course.findOne.mockReset();
-//     Course.findOne.mockResolvedValue(null);
-//     Course.findAll.mockReset();
-//     Course.findAll.mockResolvedValue(null);
-//   });
+describe('GET /courses', () => {
+  beforeEach(() => {
+    Course.create.mockReset();
+    Course.create.mockResolvedValue(null);
+    Course.findOne.mockReset();
+    Course.findOne.mockResolvedValue(null);
+    Course.findAll.mockReset();
+    Course.findAll.mockResolvedValue(null);
+  });
 
   // helper functions - id is a numeric value
-//   async function callGetOnCourseRoute(row, key = 'id') {
-//     const id = row[key];
-//     Course.findOne.mockResolvedValueOnce(row);
-//     const response = await request(app).get(`/courses/${id}`);
-//     return response;
-//   }
-
-// NEEDS DATABASE SCHEME
+  async function callGetOnCourseRoute(row, key = 'id') {
+    const id = row[key];
+    Course.findOne.mockResolvedValueOnce(row);
+    const response = await request(app).get(`/courses/${id}`);
+    return response;
+  }
 
 // helper functions - userId is a text value
 //   describe('given a row id', () => {
@@ -412,4 +408,4 @@ jest.mock('../services/auth', () => {
 //       expect(response.statusCode).toBe(400);
 //     });
 //   });
-// });
+});
