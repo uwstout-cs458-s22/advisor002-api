@@ -21,7 +21,7 @@ function initialize() {
       
       CREATE TABLE IF NOT EXISTS "course" (
         id serial,
-        courseId integer,
+        courseId text,
         name text,
         credits integer,
         PRIMARY KEY (id)
