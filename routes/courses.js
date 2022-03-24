@@ -47,18 +47,10 @@ module.exports = () => {
     }
   });
 
-  router.delete('/:courseId', authorizeSession, async (req, res, next) => {
+  router.delete('/:Id', authorizeSession, async (req, res, next) => {
     try {
-      const userId = req.body[0].userId;
-      const courseId = req.params.courseId;
-      const user = await User.findOne({ id: userId });
-      if (!userId || !courseId) {
-        throw HttpError(400, 'Required Parameters Missing');
-      }
-      if (user.role !== 'director') {   // Does not seem secure
-        throw HttpError(400, 'Access Denied');
-      }
-      const course = await Course.remove({ courseId: courseId });
+      const Id = req.params.Id;
+      const course = await Course.remove({ id: Id });
       if (isEmpty(course)) {
         throw new HttpError.NotFound();
       }

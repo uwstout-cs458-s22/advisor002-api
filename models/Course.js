@@ -11,7 +11,7 @@ const { whereParams, insertValues } = require('../services/sqltools');
 // otherwise throw error
 async function remove(criteria) {
   const { text, params } = whereParams(criteria);
-  const res = await db.query(`DELETE FROM "course" ${text};`, params);
+  const res = await db.query(`DELETE FROM "course" ${text} RETURNING *;`, params);
   if (res.rows.length > 0) {
     log.debug(
       `Successfully deleted course from db with criteria: ${text}, ${JSON.stringify(params)}`

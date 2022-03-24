@@ -64,7 +64,7 @@ async function create(userId, email) {
   }
 }
 
-// if successful, user is delted.
+// if successful, user is deleted.
 // if db error, db.query will throw a rejected promise
 // userId refers to the user being deleted
 // email is used to check for admin role on the deleter
