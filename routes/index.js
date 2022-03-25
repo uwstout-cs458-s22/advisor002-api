@@ -7,7 +7,9 @@ module.exports = () => {
   router.use(bodyParser.urlencoded({ extended: true }));
   router.use(bodyParser.json());
   const usersRoutes = require('./users')();
+  const courseRoutes = require('./courses')();
   router.use('/users', usersRoutes);
+  router.use('/courses', courseRoutes);
   router.get('/health', (req, res) => {
     const uptime = process.uptime();
     const data = {
