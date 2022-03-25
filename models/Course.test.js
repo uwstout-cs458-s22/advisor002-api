@@ -134,5 +134,3 @@ describe('Course Model', () => {
         await expect(Course.remove(row.id)).rejects.toThrowError('Unexpected db condition, delete successful with no returned record');
       });
     });
- });
-
