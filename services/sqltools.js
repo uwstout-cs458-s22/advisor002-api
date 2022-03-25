@@ -52,29 +52,6 @@ function insertValues(values) {
   };
 }
 
-function updateValues(values) {
-  if (values && Object.keys(values).length > 0) {
-    const columns = Object.keys(values);
-    const params = Object.values(values);
-
-    let setText = 'SET ';
-    let count = 1;
-    columns.forEach(x => {
-      setText += count === columns.length ? `${x} = $${count}` : `${x} = $${count}, `;
-      count++;
-    });
-
-    return {
-      text: setText,
-      params: params
-    };
-  }
-
-  return {
-    text: '',
-    params: []
-  };
-}
 
 function updateValues(values) {
   if (values && Object.keys(values).length > 0) {
