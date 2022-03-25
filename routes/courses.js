@@ -1,14 +1,13 @@
 const express = require('express');
 const log = require('loglevel');
 const HttpError = require('http-errors');
-const { isEmpty } = require('./../services/utils');
-const Course = require('./../models/Course');
-const User = require('./../models/User');
-const { authorizeSession } = require('./../services/auth');
+const { isEmpty } = require('../services/utils');
+const Course = require('../models/Course');
+const User = require('../models/User');
+const { authorizeSession } = require('../services/auth');
 
 module.exports = () => {
   const router = express.Router();
-
 
   // Find one course - STILL REQUIRES JEST/MOCK TESTS
   router.get('/:id', authorizeSession, async (req, res, next) => {
@@ -26,7 +25,6 @@ module.exports = () => {
       next(error);
     }
   });
-
 
   // Edit a course (PUT request)
   // Access via http://localhost:3000/courses/# (# is the id of the course to edit)
@@ -69,9 +67,11 @@ module.exports = () => {
           });
         }
       }
-      } catch (error) {
+    } catch (error) {
       next(error);
     }
+  });
+
 
   router.delete('/', authorizeSession, async (req, res, next) => {
     try {
