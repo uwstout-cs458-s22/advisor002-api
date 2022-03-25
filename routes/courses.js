@@ -24,6 +24,7 @@ module.exports = () => {
         //   throw new HttpError.Forbidden('You are not allowed to do this');
         // }
         await Course.remove(Id);
+        res.send();
       }
     } catch (error) {
       next(error);
