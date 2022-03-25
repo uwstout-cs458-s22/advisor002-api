@@ -68,6 +68,7 @@ module.exports = () => {
             error: 'You are not authorized to edit courses'
           });
         }
+      }
       } catch (error) {
       next(error);
     }
