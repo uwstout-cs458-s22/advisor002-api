@@ -2,7 +2,6 @@ const log = require('loglevel');
 const {
   db
 } = require('../services/database');
-// const env = require('../services/environment');
 const Course = require('./Course');
 
 beforeAll(() => {
@@ -17,13 +16,13 @@ jest.mock('../services/database.js', () => {
   };
 });
 
-// jest.mock('../services/environment.js', () => {
-//   return {
-//     masterAdminEmail: 'master@gmail.com',
-//   };
-// });
+jest.mock('../services/environment.js', () => {
+  return {
+    masterAdminEmail: 'master@gmail.com',
+  };
+});
 
-// a helper that creates an array structure for getCourseById
+// // a helper that creates an array structure for getCourseById
 function dataForGetCourse(rows, offset = 0) {
   const data = [];
   for (let i = 1; i <= rows; i++) {
@@ -31,124 +30,70 @@ function dataForGetCourse(rows, offset = 0) {
     data.push({
       id: `${value}`,
       name: `course${value}`,
-      courseId: `courseTestId${value}`,
-      major: 'compSci',
+      courseId: `${value}`,
       credits: `${value}`,
-      semester: 'summer',
     });
   }
   return data;
 }
 
 
-// describe('GET /Course', () => {
-
-// // helper functions - id is a numeric value
-// async function callGetOnCourseRoute(row, key = 'id') {
-//   const id = row[key];
-//   Course.findOneCourse.mockResolvedValueOnce(row);
-//   const response = await request(app).get(`/courses/${id}`);
-//   return response;
-// }
-// // helper functions - userId is a text value
-
-// describe('given a row id', () => {
-//   test('should make a call to Course.findOneCOurse', async () => {
-//     const row = dataForGetCourse(1)[0];
-//     // await callGetOnCourseRoute(row);
-//     expect(Course.findOneCourse.mock.calls).toHaveLength(1);
-//     expect(Course.findOneCourse.mock.calls[0]).toHaveLength(1);
-//     expect(Course.findOneCourse.mock.calls[0][0]).toHaveProperty('id', row.id);
-//   });
-
-
-
-// });
-
-
-
 describe('Course Model', () => {
+
   beforeEach(() => {
     db.query.mockReset();
     db.query.mockResolvedValue(null);
   });
 
-
-  // describe('querying a single course by id', () => {
-
-
-
-
-
-
   describe('Edit a Course', () => {
-
-    test('findOneCourse with valid ID', async () => {
-      const row = dataForGetCourse(1)[0];
-      db.query.mockResolvedValue({
-        rows: [row]
-      });
-      await Course.findOneCourse({
-        id: row.id
-      });
-      expect(db.query.mock.calls).toHaveLength(1);
-      expect(db.query.mock.calls[0][1][0]).toBe(row.id);
-    });
-
-    test('findOneCourse with invalid ID', async () => {
-      db.query.mockResolvedValue({
-        rows: []
-      });
-      await Course.findOneCourse({
-        id: 2
-      });
-      expect(db.query.mock.calls).toHaveLength(0); // Should be empty because course not found
-    });
-
-
-    test('Edit a course to have name NewCourse and major NewMajor', async () => {
+    test('Edit a course to have new name, credits, courseId', async () => {
       const data = dataForGetCourse(1);
       const row = data[0];
-      row.id = 123;
       row.name = "OldCourse"
+      row.credits = 4
       const putDoc = {
         name: 'NewCourse',
-        major: 'NewMajor',
-        credits: row.credits,
-        semester: row.semester
+        credits: 4,
+        courseId: 5
       };
 
       db.query.mockResolvedValue({
         rows: data
       });
+
       await Course.editCourse(row.id, putDoc);
       expect(db.query.mock.calls).toHaveLength(1);
-      expect(db.query.mock.calls[0]).toHaveLength(2);
+      expect(db.query.mock.calls[0]).toHaveLength(1);
       expect(db.query.mock.calls[0][0]).toBe(
-        'UPDATE "course" SET name = $1, major = $2, credits = $3, semester = $4 WHERE id = $5 RETURNING *;'
+        `Update "course" SET name = 'NewCourse' , "courseId" = 5 , credits = '4' WHERE id = 1 RETURNING *;`
       );
-      expect(db.query.mock.calls[0][1]).toHaveLength(5);
-      expect(db.query.mock.calls[0][1][0]).toBe(putDoc.name);
-      expect(db.query.mock.calls[0][1][1]).toBe(putDoc.major);
     });
 
-    test('Throw 500 error', async () => {
+    test('Throw 400 error for no input', async () => {
       const data = dataForGetCourse(1);
       const row = data[0];
       db.query.mockResolvedValue({ // empty
         rows: []
       });
-      await expect(Course.editCourse(row.id, data)).rejects.toThrowError('Unexpected DB condition, update successful with no returned record');
+      await expect(Course.editCourse(row.id, data)).rejects.toThrowError('Id and a course attribute required');
     });
 
-    test('editCourse with no input', async () => {
-      await expect(Course.editCourse()).rejects.toThrowError('Id and a put document are required');
-      expect(db.query.mock.calls).toHaveLength(0);
-    });
 
-    test('editCourse with invalid input', async () => {
-      await expect(Course.editCourse('invalid')).rejects.toThrowError('Id and a put document are required');
-      expect(db.query.mock.calls).toHaveLength(0);
+    test('Throw 500 error for other errors', async () => {
+      const data = dataForGetCourse(1);
+      const row = data[0];
+      row.name = "OldCourse"
+      row.credits = 4
+      const putDoc = {
+        name: 'NewCourse',
+        credits: 4,
+        courseId: 5
+      };
+
+      db.query.mockResolvedValue({
+        rows: []
+      });
+      await expect(Course.editCourse(row.id, putDoc)).rejects.toThrowError('Unexpected DB condition, update successful with no returned record');
     });
   });
 });

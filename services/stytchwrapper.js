@@ -7,7 +7,8 @@ async function authenticateStytchSession(token) {
     secret: env.stytchSecret,
     env: env.stytchEnv,
   });
-  const result = client.sessions.authenticate({
+  const result = await client.sessions.authenticate({
+    // const result = client.sessions.authenticate({
     session_token: token,
     session_duration_minutes: env.sessionDuration,
   });
