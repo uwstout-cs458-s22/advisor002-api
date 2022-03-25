@@ -85,7 +85,10 @@ describe('auth tests', () => {
       }
     });
     stytchwrapper.authenticateStytchSession.mockResolvedValue({
-      status_code: 200
+      status_code: 200,
+      session: {
+        user_id: 'user-test123456'
+      }
     });
     await auth.authorizeSession(req, res, next);
     expect(stytchwrapper.authenticateStytchSession.mock.calls).toHaveLength(1);
