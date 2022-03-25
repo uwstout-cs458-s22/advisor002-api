@@ -92,6 +92,5 @@ module.exports = () => {
     }
   });
 
-
   return router;
 };
