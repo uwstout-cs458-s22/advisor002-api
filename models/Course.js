@@ -23,20 +23,20 @@ async function remove(Id) {
   }
 }
 
-// if found return { ... }
-// if not found return {}
-// if db error, db.query will throw a rejected promise
-// This is just here to cover the editCourse tests, can modify them later to use findOne
-async function findOneCourse(criteria) {
-  const { text, params } = whereParams(criteria);
-  const res = await db.query(`SELECT * from "course" ${text} LIMIT 1;`, params);
-  if (res.rows.length > 0) {
-    log.debug(`Successfully found course from db with criteria: ${text}, ${JSON.stringify(params)}`);
-    return res.rows[0];
-  }
-  log.debug(`No courses found in db with criteria: ${text}, ${JSON.stringify(params)}`);
-  return {};
-}
+// // if found return { ... }
+// // if not found return {}
+// // if db error, db.query will throw a rejected promise
+// // This is just here to cover the editCourse tests, can modify them later to use findOne
+// async function findOneCourse(criteria) {
+//   const { text, params } = whereParams(criteria);
+//   const res = await db.query(`SELECT * from "course" ${text} LIMIT 1;`, params);
+//   if (res.rows.length > 0) {
+//     log.debug(`Successfully found course from db with criteria: ${text}, ${JSON.stringify(params)}`);
+//     return res.rows[0];
+//   }
+//   log.debug(`No courses found in db with criteria: ${text}, ${JSON.stringify(params)}`);
+//   return {};
+// }
 
 // if found return { ... }
 // if not found return {}
