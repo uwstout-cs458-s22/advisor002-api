@@ -95,4 +95,3 @@ module.exports = () => {
 
   return router;
 };
-
