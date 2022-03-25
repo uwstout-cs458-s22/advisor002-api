@@ -68,6 +68,9 @@ module.exports = () => {
             error: 'You are not authorized to edit courses'
           });
         }
+      } catch (error) {
+      next(error);
+    }
 
   router.delete('/', authorizeSession, async (req, res, next) => {
     try {
