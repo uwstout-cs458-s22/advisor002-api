@@ -64,16 +64,16 @@ module.exports = () => {
     try {
       const id = req.params.id;
       const user = await User.findOne({ id: id });
-      
-      if(isEmpty(user)) {
-        throw new HttpError.NotFound('A user with that id was not found.');
-      }
 
-      if(isEmpty(req.body) || !req.body.senderId) {
+      if(isEmpty(req.body)) {
         throw new HttpError.BadRequest('Required parameters are missing');
       }
 
-      const sender = await User.findOne({ id: req.body.senderId });
+      const sender = await User.findOne({ userId: res.locals.userId });
+
+      if(isEmpty(user) || isEmpty(sender)) {
+        throw new HttpError.NotFound();
+      }
 
       if(!(sender.role === 'admin' || user.id === sender.id)) {
         throw new HttpError.Forbidden('You are not allowed to do this');
