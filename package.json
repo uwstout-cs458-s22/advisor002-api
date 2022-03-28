@@ -55,10 +55,10 @@
       "services/database.js",
       "services/environment.js",
       "./server.js",
-      "(.sql)$"
+      "initDatabase.sql"
     ],
     "testPathIgnorePatterns" : [
-      "(.sql)$"
+      "initDatabase.sql"
     ],
     "coverageThreshold": {
       "global": {
