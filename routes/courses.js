@@ -8,6 +8,15 @@ const { authorizeSession } = require('./../services/auth');
 module.exports = () => {
   const router = express.Router();
 
+  router.get('/', authorizeSession, async (req, res, next) => {
+    try {
+      const criteria = {};
+      const courses = await Course.findAll({},criteria);
+      return res.send(courses)
+    } catch (error) {
+      next(error);
+    }
+  })
   router.delete('/', authorizeSession, async (req, res, next) => {
     try {
       const Id = req.body.id;
