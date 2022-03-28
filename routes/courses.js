@@ -13,13 +13,16 @@ module.exports = () => {
       const Id = req.body.id;
       const course = await Course.findOne({ id: Id });
       if (!Id) {
+        res.status(400);
         throw HttpError(400, 'Required Parameters Missing');
       }
       else if (isEmpty(course)) {
+        res.status(400);
         throw new HttpError.NotFound();
       } else {
         const sender = await User.findOne({ userId: res.locals.userId });
         if(!(sender.role === 'director')) {
+          res.status(403);
           throw new HttpError.Forbidden('You are not allowed to do this');
         }
         await Course.remove(Id);
