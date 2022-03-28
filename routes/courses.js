@@ -1,4 +1,5 @@
 const express = require('express');
+const log = require('loglevel');
 const HttpError = require('http-errors');
 const { isEmpty } = require('./../services/utils');
 const Course = require('./../models/Course');
@@ -10,10 +11,24 @@ module.exports = () => {
 
   router.get('/', authorizeSession, async (req, res, next) => {
     try {
-      const criteria = {};
-      const courses = await Course.findAll({},criteria);
+      const courses = await Course.findAll({},null);
       return res.send(courses)
     } catch (error) {
+      next(error);
+    }
+  })
+
+  router.get('/:courseid', authorizeSession, async (req, res, next) => {
+    try {
+      const courseid = req.params.courseid;
+      const courses = await Course.findAll({courseid: courseid});
+      if(isEmpty(courses)) {
+        throw new HttpError.NotFound();
+      }
+      log.info(`${req.method} ${req.originalUrl} success: returning courses ${courseid}`);
+      return res.send(courses);
+
+    } catch(error) {
       next(error);
     }
   })
