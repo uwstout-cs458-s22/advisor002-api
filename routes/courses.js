@@ -1,10 +1,14 @@
 const express = require('express');
 const log = require('loglevel');
 const HttpError = require('http-errors');
-const { isEmpty } = require('../services/utils');
+const {
+  isEmpty
+} = require('../services/utils');
 const Course = require('../models/Course');
 const User = require('../models/User');
-const { authorizeSession } = require('../services/auth');
+const {
+  authorizeSession
+} = require('../services/auth');
 
 module.exports = () => {
   const router = express.Router();
@@ -13,7 +17,7 @@ module.exports = () => {
   router.get('/:id', authorizeSession, async (req, res, next) => {
     try {
       const id = req.params.id;
-      const course = await Course.findOneCourse({
+      const course = await Course.findOne({
         id: id
       });
       if (isEmpty(course)) {
@@ -28,12 +32,12 @@ module.exports = () => {
 
   // Edit a course (PUT request)
   // Access via http://localhost:3000/courses/# (# is the id of the course to edit)
-  // PUT body should contain JSON for course name, courseId, credits
+  // PUT body should contain JSON for course name, section, credits
   router.put('/:id', authorizeSession, async (req, res, next) => {
     try {
       // Get the course to edit and make sure it exists in database
       const id = req.params.id;
-      const course = await Course.findOneCourse({
+      const course = await Course.findOne({
         id: id
       });
 
@@ -52,7 +56,7 @@ module.exports = () => {
         if (sender.role === 'director') {
           const newCourseJSON = {
             name: req.body.name,
-            courseId: req.body.courseId,
+            section: req.body.section,
             credits: req.body.credits
           };
 
@@ -73,28 +77,31 @@ module.exports = () => {
   });
 
 
-//   router.delete('/', authorizeSession, async (req, res, next) => {
-//     try {
-//       const Id = req.body.id;
-//       const course = await Course.findOne({ id: Id });
-//       if (!Id) {
-//         throw HttpError(400, 'Required Parameters Missing');
-//       }
-//       else if (isEmpty(course)) {
-//         throw new HttpError.NotFound();
-//       } else {
-//         const sender = await User.findOne({ userId: res.locals.userId });
-//         if(!(sender.role === 'director')) {
-//           throw new HttpError.Forbidden('You are not allowed to do this');
-//         }
-//         await Course.remove(Id);
-//         res.send();
+  // router.delete('/', authorizeSession, async (req, res, next) => {
+  //   try {
+  //     const Id = req.body.id;
+  //     const course = await Course.findOne({
+  //       id: Id
+  //     });
+  //     if (!Id) {
+  //       throw HttpError(400, 'Required Parameters Missing');
+  //     } else if (isEmpty(course)) {
+  //       throw new HttpError.NotFound();
+  //     } else {
+  //       const sender = await User.findOne({
+  //         userId: res.locals.userId
+  //       });
+  //       if (!(sender.role === 'director')) {
+  //         throw new HttpError.Forbidden('You are not allowed to do this');
+  //       }
+  //       await Course.remove(Id);
+  //       res.send();
 
-//       }
-//     } catch (error) {
-//       next(error);
-//     }
-//   });
+  //     }
+  //   } catch (error) {
+  //     next(error);
+  //   }
+  // });
 
   return router;
 };

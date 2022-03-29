@@ -10,7 +10,7 @@ beforeAll(() => {
 
 jest.mock('../models/Course.js', () => {
   return {
-    findOneCourse: jest.fn(),
+    findOne: jest.fn(),
     // findAll: jest.fn(),
     // create: jest.fn(),
     editCourse: jest.fn()
@@ -50,7 +50,7 @@ function dataForGetCourse(rows, offset = 0) {
     data.push({
       id: `${value}`,
       name: 'courseTest',
-      courseId: `${value}`,
+      section: `${value}`,
       credits: `${value}`
     });
   }
@@ -60,8 +60,8 @@ function dataForGetCourse(rows, offset = 0) {
 
 describe('PUT /courses', () => {
   beforeEach(() => {
-    Course.findOneCourse.mockReset();
-    Course.findOneCourse.mockResolvedValue(null);
+    Course.findOne.mockReset();
+    Course.findOne.mockResolvedValue(null);
     User.findOne.mockReset();
     User.findOne.mockResolvedValue(null);
     Course.editCourse.mockReset();
@@ -73,28 +73,28 @@ describe('PUT /courses', () => {
 
 
   describe('Given id', () => {
-    test('Testing calling Course.findOneCourse and Course.editCourse', async () => {
+    test('Testing calling Course.findOne and Course.editCourse', async () => {
 
       const data = dataForGetCourse(1);
       const row = data[0];
 
       const newCourseParams = {
         name: 'TestClass',
-        courseId: 5,
+        section: 5,
         credits: 4
       };
 
       const resultCourseParams = {
         id: row.id,
         name: 'TestClass',
-        courseId: 5,
+        section: 5,
         credits: 4
       };
 
-      Course.findOneCourse.mockResolvedValueOnce({
+      Course.findOne.mockResolvedValueOnce({
         id: row.id,
         name: row.name,
-        courseId: row.courseId,
+        section: row.section,
         credits: row.credits
       })
       User.findOne.mockResolvedValueOnce({
@@ -119,21 +119,21 @@ describe('PUT /courses', () => {
 
       const newCourseParams = {
         name: 'TestClass',
-        courseId: 5,
+        section: 5,
         credits: 4
       };
 
       const resultCourseParams = {
         id: row.id,
         name: 'TestClass',
-        courseId: 5,
+        section: 5,
         credits: 4
       };
 
-      Course.findOneCourse.mockResolvedValueOnce({
+      Course.findOne.mockResolvedValueOnce({
         id: row.id,
         name: row.name,
-        courseId: row.courseId,
+        section: row.section,
         credits: row.credits
       })
       User.findOne.mockResolvedValueOnce({
@@ -161,7 +161,7 @@ describe('PUT /courses', () => {
         email: 'Dummy@Data.com',
         name: 'DummyCourseData'
       };
-      Course.findOneCourse.mockResolvedValueOnce({
+      Course.findOne.mockResolvedValueOnce({
         row: row
       });
       User.findOne.mockResolvedValueOnce({
@@ -180,7 +180,7 @@ describe('PUT /courses', () => {
       const data = dataForGetCourse(1);
       const row = data[0];
 
-      Course.findOneCourse.mockResolvedValueOnce({});
+      Course.findOne.mockResolvedValueOnce({});
       User.findOne.mockResolvedValueOnce({
         id: 456,
         email: 'fake@aol.com',
@@ -198,7 +198,7 @@ describe('PUT /courses', () => {
     test('Throw 400 error', async () => {
       const data = dataForGetCourse(1);
       const row = data[0];
-      Course.findOneCourse.mockResolvedValueOnce({
+      Course.findOne.mockResolvedValueOnce({
         row: row
       });
 
@@ -212,13 +212,13 @@ describe('PUT /courses', () => {
       const row = data[0];
 
       const newCourseParams = {
-        courseId: 'TestClass546',
+        section: 'TestClass546',
         name: 'TestClass',
         credits: 4
       };
 
-      Course.findOneCourse.mockResolvedValueOnce({
-        courseId: 'TestClass123',
+      Course.findOne.mockResolvedValueOnce({
+        section: 'TestClass123',
         name: 'TestClass',
         credits: 3
       })
@@ -236,4 +236,7 @@ describe('PUT /courses', () => {
       expect(response.statusCode).toBe(403);
     });
   });
+
+
+
 });

@@ -1,20 +1,26 @@
 function whereParams(values, query) {
-  if(query !== null && query !== undefined && values && Object.keys(values).length > 0) {
+  if (query !== null && query !== undefined && values && Object.keys(values).length > 0) {
     const text = `WHERE email LIKE '%' || $1 || '%' AND ` +
       Object.keys(values)
-        .map((col, index) => `"${col}"=$${index + 2}`)
-        .join(' AND ');
+      .map((col, index) => `"${col}"=$${index + 2}`)
+      .join(' AND ');
 
     const params = [query];
     Object.values(values).forEach(x => {
       params.push(x);
     });
 
-    return {text:text, params: params}
-  } else if(query && Object.keys(values).length === 0) {
+    return {
+      text: text,
+      params: params
+    }
+  } else if (query && Object.keys(values).length === 0) {
     const text = `WHERE email LIKE '%' || $1 || '%'`;
 
-    return {text: text, params: [query]}
+    return {
+      text: text,
+      params: [query]
+    }
   }
 
   if (values && Object.keys(values).length > 0) {
@@ -29,7 +35,10 @@ function whereParams(values, query) {
     };
   }
 
-  return { text: '', params: [] };
+  return {
+    text: '',
+    params: []
+  };
 }
 
 function insertValues(values) {
@@ -71,7 +80,10 @@ function updateValues(values) {
     };
   }
 
-  return { text: '', params: [] };
+  return {
+    text: '',
+    params: []
+  };
 }
 
 module.exports = {
@@ -79,4 +91,3 @@ module.exports = {
   insertValues: insertValues,
   updateValues: updateValues,
 };
-

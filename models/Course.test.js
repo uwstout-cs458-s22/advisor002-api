@@ -1,5 +1,7 @@
 const log = require('loglevel');
-const { db } = require('../services/database');
+const {
+  db
+} = require('../services/database');
 // const env = require('../services/environment');
 const Course = require('./Course');
 
@@ -77,9 +79,9 @@ describe('Course Model', () => {
 
       await Course.editCourse(row.id, putDoc);
       expect(db.query.mock.calls).toHaveLength(1);
-      expect(db.query.mock.calls[0]).toHaveLength(1);
+      expect(db.query.mock.calls[0]).toHaveLength(2);
       expect(db.query.mock.calls[0][0]).toBe(
-        `Update "course" SET name = 'NewCourse' , "courseId" = 5 , credits = '4' WHERE id = 1 RETURNING *;`
+        `UPDATE "course" SET name = $1, section = $2, credits = $3 WHERE id = $4 RETURNING *;`
       );
     });
 
@@ -89,7 +91,7 @@ describe('Course Model', () => {
       db.query.mockResolvedValue({ // empty
         rows: []
       });
-      await expect(Course.editCourse(row.id, data)).rejects.toThrowError('Id and a course attribute required');
+      await expect(Course.editCourse(row.id)).rejects.toThrowError('Id and a course attribute required');
     });
 
 
@@ -112,25 +114,29 @@ describe('Course Model', () => {
   });
 });
 
-    describe('test deleteCourse', () => {
-// requires create course
-//       test('course delete', async () => {
-//         const data = dataForDeleteCourse(1);
-//         const row = data[0];
-//         db.query.mockResolvedValue({ rows: data });
-//         await Course.create(row.userId, row.email);
-//         expect(await Course.deleteUser(row.userId, row.email)).toBe(`Successfully deleted user from db`);
-//       });
-  
-      test('No parameters', async () => {
-        db.query.mockResolvedValue({ rows: []});
-        await expect(Course.remove()).rejects.toThrowError('Id is required.');
-      });
+describe('test deleteCourse', () => {
+  // requires create course
+  //       test('course delete', async () => {
+  //         const data = dataForDeleteCourse(1);
+  //         const row = data[0];
+  //         db.query.mockResolvedValue({ rows: data });
+  //         await Course.create(row.userId, row.email);
+  //         expect(await Course.deleteUser(row.userId, row.email)).toBe(`Successfully deleted user from db`);
+  //       });
 
-      test('course delete no response returned', async () => {
-        const data = dataForDeleteCourse(1);
-        const row = data[0];
-        db.query.mockResolvedValue({ rows: []});
-        await expect(Course.remove(row.id)).rejects.toThrowError('Unexpected db condition, delete successful with no returned record');
-      });
+  test('No parameters', async () => {
+    db.query.mockResolvedValue({
+      rows: []
     });
+    await expect(Course.remove()).rejects.toThrowError('Id is required.');
+  });
+
+  test('course delete no response returned', async () => {
+    const data = dataForDeleteCourse(1);
+    const row = data[0];
+    db.query.mockResolvedValue({
+      rows: []
+    });
+    await expect(Course.remove(row.id)).rejects.toThrowError('Unexpected db condition, delete successful with no returned record');
+  });
+});
