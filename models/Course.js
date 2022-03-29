@@ -9,7 +9,7 @@ const { whereParams, insertValues } = require('../services/sqltools');
 // if successful, but not deleted, throw error
 // if db error, db.query will throw a rejected promise
 // otherwise throw error
-async function remove(Id) {
+async function deleteCourse(Id) {
   if (Id) {
     const { text, params } = whereParams({ id: Id });
     const res = await db.query(`DELETE FROM "course" ${text} RETURNING *;`, params);
@@ -49,7 +49,7 @@ async function findAll(criteria, query = null, limit = 100, offset = 0) {
 
 
 module.exports = {
-  remove,
   findOne,
-  findAll
+  findAll,
+  deleteCourse
 };
