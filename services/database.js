@@ -26,7 +26,24 @@ function initialize() {
         credits integer,
         PRIMARY KEY (id)
       );
-      CREATE INDEX IF NOT EXISTS "IDX_course_id" ON "course" ("id");`,
+      CREATE INDEX IF NOT EXISTS "IDX_course_id" ON "course" ("id");
+      
+      CREATE TABLE IF NOT EXISTS "semester" (
+        id serial,
+        name text,
+        PRIMARY KEY (id)
+      );
+      CREATE INDEX IF NOT EXISTS "IDX_semester_id" ON "semester" ("id");
+
+      CREATE TABLE IF NOT EXISTS "courseSemester" (
+        semesterId integer,
+        courseId integer,
+        PRIMARY KEY (semesterId, courseId),
+        FOREIGN KEY (semesterId)
+          REFERENCES "semester" (id),
+        FOREIGN KEY (courseId)
+          REFERENCES "course" (id)
+      );`,
     (err, res) => {
       if (err) {
         throw err;
