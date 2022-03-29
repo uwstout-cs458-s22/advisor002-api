@@ -36,7 +36,7 @@ async function findOne(criteria) {
   return {};
 }
 
-async function findAll(criteria, query = null, limit = 100, offset = 0) {
+async function findAll(criteria, limit = 100, offset = 0) {
   const { text, params } = whereParams(criteria);
   const n = params.length;
   const p = params.concat([limit, offset])

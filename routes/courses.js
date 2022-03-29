@@ -11,7 +11,13 @@ module.exports = () => {
 
   router.get('/', authorizeSession, async (req, res, next) => {
     try {
-      const courses = await Course.findAll({},null);
+      const criteria = {};
+
+      if(req.query.credits) {
+        criteria.credits = req.query.credits;
+      }
+
+      const courses = await Course.findAll(criteria,req.query.limit,req.query.offset);
       return res.send(courses)
     } catch (error) {
       next(error);
