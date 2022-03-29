@@ -72,7 +72,6 @@ describe('DELETE /courses', () => {
     User.findOne.mockReset();
     User.findOne.mockResolvedValue(null);
   });
-    });
 
   test('Parameters missing', async () =>  {
     const response = await request(app).delete('/courses').send({});
@@ -151,10 +150,6 @@ describe('DELETE /courses', () => {
     expect(response.statusCode).toBe(404);
   });
 });
-
-
-
-
 
 
   // Skipping all tests for create, find, etc.
@@ -333,5 +328,4 @@ describe('PUT /courses', () => {
       expect(response.statusCode).toBe(403);
     });
   });
-
 });
