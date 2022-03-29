@@ -60,7 +60,6 @@ describe('Course Model', () => {
     db.query.mockResolvedValue(null);
   });
 
-
   describe('Edit a Course', () => {
     test('Edit a course to have new name, credits, courseId', async () => {
       const data = dataForGetCourse(1);

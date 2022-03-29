@@ -16,7 +16,7 @@ const {
 // if successful, but not deleted, throw error
 // if db error, db.query will throw a rejected promise
 // otherwise throw error
-async function remove(Id) {
+async function deleteCourse(Id) {
   if (Id) {
     const {
       text,
@@ -79,8 +79,6 @@ async function editCourse(id, resultCourse) {
 
     const res = await db.query(`UPDATE "course" ${text} WHERE id = $${n + 1} RETURNING *;`, paramList);
 
-
-
     // Return values if successful
     if (res.rows.length > 0) {
       log.debug(
@@ -98,7 +96,7 @@ async function editCourse(id, resultCourse) {
 
 
 module.exports = {
-  remove,
+  deleteCourse,
   findOne,
   editCourse
 };
