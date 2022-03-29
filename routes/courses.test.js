@@ -13,8 +13,8 @@ jest.mock('../models/Course.js', () => {
     findOne: jest.fn(),
     // findAll: jest.fn(),
     // create: jest.fn(),
-    editCourse: jest.fn()
-    deleteCourse: jest.fn(),
+    editCourse: jest.fn(),
+    deleteCourse: jest.fn()
   };
 });
 
