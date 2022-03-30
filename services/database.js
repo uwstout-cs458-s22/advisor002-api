@@ -27,8 +27,6 @@ function initialize() {
         PRIMARY KEY (id)
       );
       CREATE INDEX IF NOT EXISTS "IDX_course_id" ON "course" ("id");
-
-      ALTER TABLE "course" RENAME "courseid" to "section";
       
       CREATE TABLE IF NOT EXISTS "semester" (
         id serial,
