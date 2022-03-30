@@ -21,12 +21,14 @@ function initialize() {
       
       CREATE TABLE IF NOT EXISTS "course" (
         id serial,
-        courseId integer,
+        section integer,
         name text,
         credits integer,
         PRIMARY KEY (id)
       );
       CREATE INDEX IF NOT EXISTS "IDX_course_id" ON "course" ("id");
+
+      ALTER TABLE "course" RENAME "courseid" to "section";
       
       CREATE TABLE IF NOT EXISTS "semester" (
         id serial,
