@@ -69,17 +69,18 @@ describe('Course Model', () => {
             await expect(Course.createCourse(fakeCourse.email, fakeCourse.courseName, fakeCourse.major, fakeCourse.credits, fakeCourse.semester))
             .rejects.toThrowError('requester does not have permissions to create a course'); 
         });
-        
-        test('Create course where course already exists in table', async () => {
 
+        test('Create course where course already exists in table', async () => {
+          
         });
 
         test('Create course where no response is recieved', async () => {
 
         });
         
-        test('Create course where all parameters are not provided', async () => {
-
+        test('Create course with no input parameters', async () => {
+          await expect(Course.createCourse()).rejects.toThrowError('Id of course is required.');
+          expect(db.query.mock.calls).toHaveLength(0);
         });
 
         test('Create course successfully', async () => {

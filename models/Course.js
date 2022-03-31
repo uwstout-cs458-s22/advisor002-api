@@ -17,7 +17,7 @@ async function findOneCourse(criteria) {
 
 
  // All of the params are required
-async function create(id, name, major, credits, semester) {
+async function createCourse(id, name, major, credits, semester) {
 
     if(name && major && credits && semester){
         const {text, params} = insertValues({
@@ -45,5 +45,5 @@ async function create(id, name, major, credits, semester) {
 
 module.exports = {
     findOneCourse,
-    create
+    createCourse
 }
