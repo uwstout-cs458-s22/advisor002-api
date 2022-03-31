@@ -24,38 +24,36 @@ module.exports = () => {
 
       let courses = [];
 
-      courses = await Course.findAll(criteria, query, req.query.limit, req.query.offset);
+      courses = await Course.findAllCourses(criteria, query, req.query.limit, req.query.offset);
 
-      log.info(`${req.method} ${req.originalUrl} success: returning ${courses.length} user(s)`);
+      log.info(`${req.method} ${req.originalUrl} success: returning ${courses.length} course(s)`);
       return res.send(courses);
-    } catch(error)
-    {
+    } catch (error) {
       next(error);
     }
   });
-      
+
   router.delete('/', authorizeSession, async (req, res, next) => {
     try {
       const Id = req.body.id;
       const course = await Course.findOne({ id: Id });
       if (!Id) {
         throw HttpError(400, 'Required Parameters Missing');
-      }
-      else if (isEmpty(course)) {
+      } else if (isEmpty(course)) {
         throw new HttpError.NotFound();
       } else {
         const sender = await User.findOne({ userId: res.locals.userId });
-        if(!(sender.role === 'director')) {
+        if (!(sender.role === 'director')) {
           throw new HttpError.Forbidden('You are not allowed to do this');
         }
         await Course.remove(Id);
         res.send();
       }
-    } catch(error) {
-       next(error);
+    } catch (error) {
+      next(error);
     }
   });
-  
+
   // not currently used, but searches for a course based on id
   router.get('/:id', authorizeSession, async (req, res, next) => {
     try {
@@ -76,23 +74,23 @@ module.exports = () => {
   // needs the id of the user making the request for authorization
   router.post('/', authorizeSession, async (req, res, next) => {
     try {
-      const userId = req.body[0].userId;
-      const courseId = req.body[0].courseId;
-      const name = req.body[0].name;
-      const major = req.body[0].major;
-      const credits = req.body[0].credits;
-      const semester = req.body[0].semester;
-      if (!name || !userId || !major || !credits || !semester) {
+      const userId = req.body.userId;
+      const id = req.body.id;
+      const courseId = req.body.courseId;
+      const name = req.body.name;
+      const credits = req.body.credits;
+
+      if (!name || !userId) {
         throw HttpError(400, 'Required Parameters Missing');
       }
       const user = await User.findOne({ id: userId });
-      if (user.role !== 'director') {
+      if (user.role !== 'admin') {
         throw HttpError(
           403,
           `requester ${user.email} does not have permissions to create a course`
         );
       } else {
-        const course = await Course.create(courseId, name, major, credits, semester);
+        const course = await Course.create(id, courseId, name, credits);
         res.status(201); // otherwise
         res.setHeader('Location', `/courses/${name}`);
         log.info(`${req.method} ${req.originalUrl} success: returning course ${name}}`);

@@ -47,15 +47,14 @@ async function findOneCourse(criteria) {
 
 
  // All of the params are required
-async function create(id, name, major, credits, semester) {
+async function create(id, courseid, name, credits) {
 
-    if(name && major && credits && semester){
+    if(name && credits){
         const {text, params} = insertValues({
             id: id,
+            courseid: courseid,
             name: name,
-            major: major,
-            credits: credits,
-            semester: semester
+            credits: credits
         });
          if(findOneCourse({id: id}) !== {}){
             const res = await db.query(`INSERT INTO "course" ${text} RETURNING *;`, params);
@@ -68,7 +67,7 @@ async function create(id, name, major, credits, semester) {
                 throw HttpError(500, `Course ${name} already exists in table "course"`);
             }
         } else {
-            throw HttpError(400, 'Course name, major, credits, and semester are required');
+            throw HttpError(400, 'Course name, courseid and credits are required');
         }
 }
 
