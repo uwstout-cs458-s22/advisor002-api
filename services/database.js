@@ -43,6 +43,24 @@ function initialize() {
           REFERENCES "semester" (id),
         FOREIGN KEY (courseId)
           REFERENCES "course" (id)
+      );
+      
+      CREATE TABLE IF NOT EXISTS "category" (
+        id serial,
+        name text,
+        prefix text,
+        PRIMARY KEY (id)
+      );
+      CREATE INDEX IF NOT EXISTS "IDX_category_id" ON "category" ("id");
+      
+      CREATE TABLE IF NOT EXISTS "courseCategory" (
+        courseId integer,
+        categoryId integer,
+        PRIMARY KEY (courseId, categoryId),
+        FOREIGN KEY (courseId)
+          REFERENCES "course" (id),
+        FOREIGN KEY (categoryId)
+          REFERENCES "category" (id)
       );`,
     (err, res) => {
       if (err) {
