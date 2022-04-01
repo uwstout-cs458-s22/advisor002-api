@@ -27,6 +27,14 @@ CREATE TABLE IF NOT EXISTS "semester" (
 );
 CREATE INDEX IF NOT EXISTS "IDX_semester_id" ON "semester" ("id");
 
+CREATE TABLE IF NOT EXISTS "category" (
+	id serial,
+	name text,
+	prefix text,
+	PRIMARY KEY (id)
+);
+CREATE INDEX IF NOT EXISTS "IDX_category_id" ON "category" ("id");
+
 -- Relations
 CREATE TABLE IF NOT EXISTS "userCourse" (
 	userId integer REFERENCES "user"(id),
@@ -36,6 +44,31 @@ CREATE TABLE IF NOT EXISTS "userCourse" (
 	PRIMARY KEY (userId, courseId, semesterId)
 );
 CREATE INDEX IF NOT EXISTS "IDX_user_course_semester_id" ON "userCourse" (userId, courseId, semesterId);
+
+CREATE TABLE IF NOT EXISTS "courseSemester" (
+	semesterId integer,
+	courseId integer,
+	PRIMARY KEY (semesterId, courseId),
+	FOREIGN KEY (semesterId)
+		REFERENCES "semester" (id),
+	FOREIGN KEY (courseId)
+		REFERENCES "course" (id)
+);
+
+
+CREATE TABLE IF NOT EXISTS "courseCategory" (
+	courseId integer,
+	categoryId integer,
+	PRIMARY KEY (courseId, categoryId),
+	FOREIGN KEY (courseId)
+		REFERENCES "course" (id),
+	FOREIGN KEY (categoryId)
+		REFERENCES "category" (id)
+);
+
+-- Changing fields
+ALTER TABLE "course" DROP COLUMN IF EXISTS "courseId";
+ALTER TABLE "course" ADD COLUMN IF NOT EXISTS "section" text;
 
 -- Run to quickly remove all tables for testing.
 -- DROP TABLE IF EXISTS "semester" cascade;
