@@ -129,3 +129,64 @@ describe('DELETE /courses', () => {
   });
 
 });
+
+
+describe('POST /courses', () => {
+  beforeEach(() => {
+    Course.findOne.mockReset();
+    Course.findOne.mockResolvedValue(null);
+    User.findOne.mockReset();
+    User.findOne.mockResolvedValue(null);
+  });
+
+  test('Parameters missing', async () =>  {
+    const response = await request(app).post('/courses').send({});
+    expect(response.statusCode).toBe(400);
+  });
+
+  test('User should not be allowed to create course', async () =>  {
+    User.findOne.mockResolvedValueOnce({id: 12345,
+      email: `emailmine@uwstout.edu`,
+      userId: `user-test-someguid`,
+      enable: 'false',
+      role: 'user'})
+
+    const response = await request(app).post('/courses').send({ id: 12345,
+      section: 505,
+      name: `course name`,
+      credits: 3});
+    expect(response.statusCode).toBe(403);
+  });
+
+  test('Admin should not be allowed to create course', async () =>  {
+
+    User.findOne.mockResolvedValueOnce({id: 12345,
+      email: `emailmine@uwstout.edu`,
+      userId: `user-test-someguid`,
+      enable: 'false',
+      role: 'admin'})
+
+    const response = await request(app).post('/courses').send({ id: 12345,
+      section: 505,
+      name: `course name`,
+      credits: 3});
+    expect(response.statusCode).toBe(403);
+  });
+
+  test('Director should be allowed to delete course', async () =>  {
+
+    User.findOne.mockResolvedValueOnce({id: 12345,
+      email: `emailmine@uwstout.edu`,
+      userId: `user-test-someguid`,
+      enable: 'false',
+      role: 'director'})
+
+    Course.deleteCourse.mockResolvedValueOnce(`Successfully deleted course from db`);
+
+    const response = await request(app).post('/courses').send({ id: 12345,
+      section: 505,
+      name: `course name`,
+      credits: 3});
+    expect(response.statusCode).toBe(201);
+  });
+});

@@ -37,7 +37,7 @@ module.exports = () => {
         throw HttpError(400, 'Required Parameters Missing');
       }
       const user = await User.findOne({ id: userId });
-      if (user.role !== 'admin') {
+      if (user.role !== 'director') {
         throw HttpError(
           403,
           `requester ${user.email} does not have permissions to create a course`
