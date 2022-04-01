@@ -11,13 +11,13 @@ jest.mock('./environment', () => {
   return {
     stytchProjectId: 'project-test-11111111-1111-1111-1111-111111111111',
     stytchSecret: 'secret-test-111111111111',
-    stytchEnv: 'test',
+    stytchEnv: 'test'
   };
 });
 
 jest.mock('./stytchwrapper', () => {
   return {
-    authenticateStytchSession: jest.fn(),
+    authenticateStytchSession: jest.fn()
   };
 });
 
@@ -40,8 +40,8 @@ describe('auth tests', () => {
   test('authorizeSession - no bearer token', async () => {
     const req = getMockReq({
       headers: {
-        authorization: 'foo',
-      },
+        authorization: 'foo'
+      }
     });
     await auth.authorizeSession(req, res, next);
     expect(next.mock.calls).toHaveLength(1);
@@ -52,8 +52,8 @@ describe('auth tests', () => {
   test('authorizeSession - Bearer with no token', async () => {
     const req = getMockReq({
       headers: {
-        authorization: 'Bearer ',
-      },
+        authorization: 'Bearer '
+      }
     });
     await auth.authorizeSession(req, res, next);
     expect(next.mock.calls).toHaveLength(1);
@@ -64,12 +64,12 @@ describe('auth tests', () => {
   test('authorizeSession - Bearer expired/bad token', async () => {
     const req = getMockReq({
       headers: {
-        authorization: 'Bearer mZAYn5aLEqKUlZ_Ad9U_fWr38GaAQ1oFAhT8ds245v7Q',
-      },
+        authorization: 'Bearer mZAYn5aLEqKUlZ_Ad9U_fWr38GaAQ1oFAhT8ds245v7Q'
+      }
     });
     stytchwrapper.authenticateStytchSession.mockRejectedValueOnce({
       status_code: 404,
-      error_message: 'Session expired.',
+      error_message: 'Session expired.'
     });
     await auth.authorizeSession(req, res, next);
     expect(stytchwrapper.authenticateStytchSession.mock.calls).toHaveLength(1);
@@ -81,11 +81,14 @@ describe('auth tests', () => {
   test('authorizeSession - Good Bearer token', async () => {
     const req = getMockReq({
       headers: {
-        authorization: 'Bearer mZAYn5aLEqKUlZ_Ad9U_fWr38GaAQ1oFAhT8ds245v7Q',
-      },
+        authorization: 'Bearer mZAYn5aLEqKUlZ_Ad9U_fWr38GaAQ1oFAhT8ds245v7Q'
+      }
     });
     stytchwrapper.authenticateStytchSession.mockResolvedValue({
       status_code: 200,
+      session: {
+        user_id: 'user-test123456'
+      }
     });
     await auth.authorizeSession(req, res, next);
     expect(stytchwrapper.authenticateStytchSession.mock.calls).toHaveLength(1);

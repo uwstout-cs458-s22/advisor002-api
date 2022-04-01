@@ -10,7 +10,21 @@ module.exports = () => {
 
   router.get('/', authorizeSession, async (req, res, next) => {
     try {
-      const users = await User.findAll(null, req.query.limit, req.query.offset);
+      const criteria = {};
+      const query = req.query.query ? req.query.query : null;
+
+      if(req.query.enable) {
+        criteria.enable = (req.query.enable === 'true');
+      }
+
+      if(req.query.role) {
+        criteria.role = req.query.role;
+      }
+      
+      let users = [];
+
+      users = await User.findAll(criteria, query, req.query.limit, req.query.offset);
+      
       log.info(`${req.method} ${req.originalUrl} success: returning ${users.length} user(s)`);
       return res.send(users);
     } catch (error) {
@@ -46,6 +60,35 @@ module.exports = () => {
     }
   });
 
+  router.put('/:id(\\d+)', authorizeSession, async (req, res, next) => {
+    try {
+      const id = req.params.id;
+      const user = await User.findOne({ id: id });
+
+      if(isEmpty(req.body)) {
+        throw new HttpError.BadRequest('Required parameters are missing');
+      }
+
+      const sender = await User.findOne({ userId: res.locals.userId });
+
+      if(isEmpty(user) || isEmpty(sender)) {
+        throw new HttpError.NotFound();
+      }
+
+      if(!(sender.role === 'admin' || user.id === sender.id)) {
+        throw new HttpError.Forbidden('You are not allowed to do this');
+      }
+
+      const updatedUser = await User.update(user.id, req.body);
+
+      res.setHeader('Location', `/users/${user.id}`);
+      return res.send(updatedUser);
+
+    } catch(error) {
+      next(error);
+    }
+  });
+
   router.post('/', authorizeSession, async (req, res, next) => {
     try {
       const userId = req.body.userId;
@@ -66,5 +109,33 @@ module.exports = () => {
     }
   });
 
+  router.delete('/', async (req, res, next) => {
+    try {
+      const userId = req.body.userId;
+      const email = req.body.email;
+      const user = await User.findOne({ userId: userId });
+
+      // check for required parameters
+      if (!email || !userId) {
+        throw HttpError(400, 'Required Parameters Missing');
+      }
+      // check that user exists
+      else if (isEmpty(user)) {
+        throw new HttpError.NotFound();
+      } else {
+        const role = await User.findOne({ email: email });
+        if (role.role === 'admin' || user.email === email) {
+          await User.deleteUser(userId, email);
+          res.status(200);
+          res.send();
+        } else {
+          res.status(403);
+          res.send({ error: 'You are not authorized to do this' });
+        }
+      }
+    } catch (error) {
+      next(error);
+    }
+  });
   return router;
 };

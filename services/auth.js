@@ -8,19 +8,23 @@ async function authorizeSession(req, res, next) {
   if (isString(authHeader) && authHeader.startsWith('Bearer ') && authHeader.length > 7) {
     const token = authHeader.substring(7, authHeader.length);
     try {
-      await authenticateStytchSession(token);
+      const result = await authenticateStytchSession(token);
       log.debug(
         `${req.method} ${req.originalUrl} success: authorizeSession validated token ${token}`
       );
+      
+      res.locals.userId = result.session.user_id;
       next();
-    } catch (err) {
+    }
+    catch (err) {
       next(HttpError(err.status_code, `Authorization Failed: ${err.error_message}`));
     }
-  } else {
+  }
+  else {
     next(HttpError(401, 'Authorization of User Failed: No Token'));
   }
 }
 
 module.exports = {
-  authorizeSession,
+  authorizeSession
 };
