@@ -12,7 +12,7 @@ CREATE INDEX IF NOT EXISTS "IDX_user_userId" ON "user" ("userId");
 
 CREATE TABLE IF NOT EXISTS "course" (
 	id serial,
-	courseId integer,
+	section integer,
 	name text,
 	credits integer,
 	PRIMARY KEY (id)
