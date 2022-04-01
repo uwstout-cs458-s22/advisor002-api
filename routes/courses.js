@@ -5,11 +5,6 @@ const { authorizeSession } = require('./../services/auth');
 const Course = require('./../models/Course');
 const User = require('./../models/User');
 const { isEmpty } = require('./../services/utils');
-const HttpError = require('http-errors');
-const { isEmpty } = require('./../services/utils');
-const Course = require('./../models/Course');
-const User = require('./../models/User');
-const { authorizeSession } = require('./../services/auth');
 
 module.exports = () => {
   const router = express.Router();
@@ -35,27 +30,30 @@ module.exports = () => {
   router.post('/', authorizeSession, async (req, res, next) => {
     try {
       const userId = req.body[0].userId;
-      const courseId = req.body[0].courseId;
+      const section = req.body[0].section;
       const name = req.body[0].name;
-      const major = req.body[0].major;
       const credits = req.body[0].credits;
-      const semester = req.body[0].semester;
-      if (!name || !userId || !major || !credits || !semester) {
+      if (!name || !userId || !credits || !section) {
         throw HttpError(400, 'Required Parameters Missing');
       }
       const user = await User.findOne({ id: userId });
-      if (user.role !== 'director') {
+      if (user.role !== 'admin') {
         throw HttpError(
           403,
           `requester ${user.email} does not have permissions to create a course`
         );
       } else {
-        const course = await Course.create(courseId, name, major, credits, semester);
+        const course = await Course.createCourse(name, credits, section);
         res.status(201); // otherwise
         res.setHeader('Location', `/courses/${name}`);
         log.info(`${req.method} ${req.originalUrl} success: returning course ${name}}`);
         return res.send(course);
       }
+    } catch(error) {
+      next(error);
+    }
+  });
+
   router.delete('/', authorizeSession, async (req, res, next) => {
     try {
       const Id = req.body.id;
