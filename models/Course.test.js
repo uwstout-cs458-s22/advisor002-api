@@ -28,7 +28,7 @@ function dataForDeleteCourse(rows, offset = 0) {
     const value = i + offset;
     data.push({
       id: `${value}`,
-      courseId: 1,
+      section: 1,
       name: 'test name',
       credits: 4,
     });

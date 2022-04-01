@@ -58,7 +58,7 @@ describe('DELETE /courses', () => {
 
   test('Cannot find locals.userId', async () =>  {
     Course.findOne.mockResolvedValueOnce({id: `145`,
-      courseId: `505`,
+    section: `505`,
       name: `course name`,
       credits: 3})
 
@@ -68,7 +68,7 @@ describe('DELETE /courses', () => {
 
   test('User should not be allowed to delete course', async () =>  {
     Course.findOne.mockResolvedValueOnce({id: `145`,
-      courseId: `505`,
+      section: `505`,
       name: `course name`,
       credits: 3})
     User.findOne.mockResolvedValueOnce({id: 12345,
@@ -83,7 +83,7 @@ describe('DELETE /courses', () => {
 
   test('Admin should not be allowed to delete course', async () =>  {
     Course.findOne.mockResolvedValueOnce({id: `145`,
-      courseId: `505`,
+      section: `505`,
       name: `course name`,
       credits: 3})
 
@@ -99,7 +99,7 @@ describe('DELETE /courses', () => {
 
   test('Director should be allowed to delete course', async () =>  {
     Course.findOne.mockResolvedValueOnce({id: `145`,
-      courseId: `505`,
+      section: `505`,
       name: `course name`,
       credits: 3})
 
