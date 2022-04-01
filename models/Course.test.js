@@ -54,14 +54,14 @@ describe('Course Model', () => {
   
       test('No parameters', async () => {
         db.query.mockResolvedValue({ rows: []});
-        await expect(Course.remove()).rejects.toThrowError('Id is required.');
+        await expect(Course.deleteCourse()).rejects.toThrowError('Id is required.');
       });
 
       test('course delete no response returned', async () => {
         const data = dataForDeleteCourse(1);
         const row = data[0];
         db.query.mockResolvedValue({ rows: []});
-        await expect(Course.remove(row.id)).rejects.toThrowError('Unexpected db condition, delete successful with no returned record');
+        await expect(Course.deleteCourse(row.id)).rejects.toThrowError('Unexpected db condition, delete successful with no returned record');
       });
     });
  });
