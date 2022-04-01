@@ -7,7 +7,7 @@ function initialize() {
   const { databaseUrl } = require('./environment');
   const parse = require('pg-connection-string').parse;
   const config = parse(databaseUrl);
-  const databaseFilePath = './services/sql/initDatabase.sql'
+  const databaseFilePath = 'services/initDatabase.sql'
   const databaseInitQuery = fs.readFileSync(databaseFilePath)
   if (databaseInitQuery) {
     module.exports.db = new Pool(config);
