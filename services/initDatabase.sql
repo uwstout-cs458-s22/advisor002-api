@@ -69,6 +69,8 @@ CREATE TABLE IF NOT EXISTS "courseCategory" (
 -- Changing fields
 ALTER TABLE "course" DROP COLUMN IF EXISTS "courseId";
 ALTER TABLE "course" ADD COLUMN IF NOT EXISTS "section" text;
+ALTER TABLE "semester" ADD COLUMN IF NOT EXISTS "year" integer;
+ALTER TABLE "semester" DROP COLUMN IF EXISTS "name";
 -- Run to quickly remove all tables for testing.
 -- DROP TABLE IF EXISTS "semester" cascade;
 -- DROP TABLE IF EXISTS "course" cascade;
