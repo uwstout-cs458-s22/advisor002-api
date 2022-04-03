@@ -29,14 +29,14 @@ module.exports = () => {
   // needs the id of the user making the request for authorization
   router.post('/', authorizeSession, async (req, res, next) => {
     try {
-      const userId = req.body[0].userId;
+      const userId = res.locals.userId;
       const section = req.body[0].section;
       const name = req.body[0].name;
       const credits = req.body[0].credits;
       if (!name || !userId || !credits || !section) {
         throw HttpError(400, 'Required Parameters Missing');
       }
-      const user = await User.findOne({ id: userId });
+      const user = await User.findOne({ userId: userId });
       if (user.role !== 'director') {
         throw HttpError(
           403,
