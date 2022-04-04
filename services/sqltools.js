@@ -86,8 +86,22 @@ function updateValues(values) {
   };
 }
 
+function whereParamsCourses(values) {
+  if (values && Object.keys(values).length > 0) {
+    const text =
+      'WHERE ' +
+      Object.keys(values)
+        .map((col, index) => `c."${col}"=$${index + 1}`)
+        .join(' AND ');
+    return { text: text, params: Object.values(values) };
+  }
+
+  return { text: '', params: [] };
+}
+
 module.exports = {
   whereParams: whereParams,
   insertValues: insertValues,
   updateValues: updateValues,
+  whereParamsCourses: whereParamsCourses
 };

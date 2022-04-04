@@ -92,7 +92,7 @@ module.exports = () => {
     }
   })
 
-  router.get('/:courseid', authorizeSession, async (req, res, next) => {
+  router.get('/:courseid', async (req, res, next) => {
     try {
       const courseid = req.params.courseid;
       const courses = await Course.findAll({id: courseid});

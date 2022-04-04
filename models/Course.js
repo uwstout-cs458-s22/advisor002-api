@@ -5,11 +5,7 @@ const {
   db
 } = require('../services/database');
 // eslint-disable-next-line no-unused-vars -- TEMP FOR ESLINT
-const {
-  whereParams,
-  // insertValues,
-  updateValues
-} = require('../services/sqltools');
+const { whereParams, insertValues, whereParamsCourses } = require('../services/sqltools');
 // const env = require('../services/environment');
 
 // if successful delete return id
@@ -38,11 +34,11 @@ async function deleteCourse(Id) {
 // if not found return {}
 // if db error, db.query will throw a rejected promise
 async function findOne(criteria) {
-  const {
-    text,
-    params
-  } = whereParams(criteria);
-  const res = await db.query(`SELECT * from "course" ${text} LIMIT 1;`, params);
+  const { text, params } = whereParamsCourses(criteria);
+  const res = await db.query(`SELECT * from "course" AS c 
+                                JOIN "courseSemester" AS cs ON cs.courseId = c.id 
+                                JOIN "semester" AS s ON s.id = cs.semesterId 
+                                ${text} LIMIT $${n + 1} OFFSET $${n + 2};`, p);
   if (res.rows.length > 0) {
     log.debug(`Successfully found course from db with criteria: ${text}, ${JSON.stringify(params)}`);
     return res.rows[0];
@@ -52,10 +48,13 @@ async function findOne(criteria) {
 }
 
 async function findAll(criteria, limit = 100, offset = 0) {
-  const { text, params } = whereParams(criteria);
+  const { text, params } = whereParamsCourses(criteria);
   const n = params.length;
   const p = params.concat([limit, offset])
-  const res = await db.query(`SELECT * from "course" ${text} LIMIT $${n + 1} OFFSET $${n + 2};`, p);
+  const res = await db.query(`SELECT * from "course" AS c  
+                                JOIN "courseSemester" AS cs ON cs.courseId = c.id 
+                                JOIN "semester" AS s ON s.id = cs.semesterId 
+                                ${text} LIMIT $${n + 1} OFFSET $${n + 2};`, p);
   log.debug(
     `Retrieved ${res.rows.length} courses from db with criteria ${text}, ${JSON.stringify(params)}`
   )
