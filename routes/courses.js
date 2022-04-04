@@ -1,4 +1,5 @@
 const express = require('express');
+const log = require('loglevel');
 const HttpError = require('http-errors');
 const { isEmpty } = require('./../services/utils');
 const Course = require('./../models/Course');
@@ -8,6 +9,35 @@ const { authorizeSession } = require('./../services/auth');
 module.exports = () => {
   const router = express.Router();
 
+  router.get('/', authorizeSession, async (req, res, next) => {
+    try {
+      const criteria = {};
+
+      if(req.query.credits) {
+        criteria.credits = req.query.credits;
+      }
+
+      const courses = await Course.findAll(criteria,req.query.limit,req.query.offset);
+      return res.send(courses)
+    } catch (error) {
+      next(error);
+    }
+  })
+
+  router.get('/:courseid', authorizeSession, async (req, res, next) => {
+    try {
+      const courseid = req.params.courseid;
+      const courses = await Course.findAll({id: courseid});
+      if(isEmpty(courses)) {
+        throw new HttpError.NotFound();
+      }
+      log.info(`${req.method} ${req.originalUrl} success: returning courses ${courseid}`);
+      return res.send(courses);
+
+    } catch(error) {
+      next(error);
+    }
+  })
   router.delete('/', authorizeSession, async (req, res, next) => {
     try {
       const Id = req.body.id;
