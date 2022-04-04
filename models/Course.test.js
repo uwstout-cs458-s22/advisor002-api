@@ -142,6 +142,12 @@ describe('Course Model', () => {
 });
 
 describe('querying all courses', () => {
+  
+   beforeEach(() => {
+    db.query.mockReset();
+    db.query.mockResolvedValue(null);
+  });
+  
       test('should make a call to Course.findAll - no criteria, no limits, no offsets', async () => {
         const data = dataForGetCourse(5);
         db.query.mockResolvedValue({ rows: data });
