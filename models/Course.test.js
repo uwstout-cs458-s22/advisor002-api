@@ -27,7 +27,7 @@ function dataForGetCourse(rows, offset = 0) {
     const value = i + offset;
     data.push({
       id: `${value}`,
-      courseid: value ,
+      section: value ,
       name: `Course-${value}`,
       credits: 3
     });
@@ -60,7 +60,7 @@ describe('Course Model', () => {
         const data = dataForDeleteCourse(1);
         const row = data[0];
         db.query.mockResolvedValue({ rows: data });
-        expect(await Course.deleteCourse(row.courseId)).toBe(`Successfully deleted course from db`);
+        expect(await Course.deleteCourse(row.section)).toBe(`Successfully deleted course from db`);
       });
   
       test('No parameters', async () => {

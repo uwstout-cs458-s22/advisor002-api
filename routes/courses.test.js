@@ -14,7 +14,7 @@ function dataForGetCourses(rows, offset = 0) {
     const value = i + offset;
     data.push({
       id: `${value}`,
-      courseid: value ,
+      section: value ,
       name: `Course-${value}`,
       credits: 3
     });
@@ -216,7 +216,7 @@ describe('Get /courses', () => {
       expect(users).toHaveLength(data.length);
       for (let i = 0; i < data.length; i++) {
         expect(users[i].id).toBe(data[i].id);
-        expect(users[i].courseid).toBe(data[i].courseid);
+        expect(users[i].section).toBe(data[i].section);
         expect(users[i].name).toBe(data[i].name);
         expect(users[i].credits).toBe(data[i].credits);
       }
