@@ -124,10 +124,6 @@ describe('Course Model', () => {
         expect(await Course.deleteCourse(row.section)).toBe(`Successfully deleted course from db`);
       });
   
-      test('No parameters', async () => {
-        db.query.mockResolvedValue({ rows: []});
-        await expect(Course.deleteCourse()).rejects.toThrowError('Id is required.');
-
   test('No parameters', async () => {
     db.query.mockResolvedValue({
       rows: []
