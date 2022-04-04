@@ -13,6 +13,7 @@ const {
 module.exports = () => {
   const router = express.Router();
 
+
   // Find one course - STILL REQUIRES JEST/MOCK TESTS
   router.get('/:id', authorizeSession, async (req, res, next) => {
     try {
@@ -76,8 +77,37 @@ module.exports = () => {
     }
   });
 
+  router.get('/', authorizeSession, async (req, res, next) => {
+    try {
+      const criteria = {};
 
-router.delete('/', authorizeSession, async (req, res, next) => {
+      if(req.query.credits) {
+        criteria.credits = req.query.credits;
+      }
+
+      const courses = await Course.findAll(criteria,req.query.limit,req.query.offset);
+      return res.send(courses)
+    } catch (error) {
+      next(error);
+    }
+  })
+
+  router.get('/:courseid', authorizeSession, async (req, res, next) => {
+    try {
+      const courseid = req.params.courseid;
+      const courses = await Course.findAll({id: courseid});
+      if(isEmpty(courses)) {
+        throw new HttpError.NotFound();
+      }
+      log.info(`${req.method} ${req.originalUrl} success: returning courses ${courseid}`);
+      return res.send(courses);
+
+    } catch(error) {
+      next(error);
+    }
+  })
+  
+  router.delete('/', authorizeSession, async (req, res, next) => {
     try {
       const Id = req.body.id;
       if (isEmpty(req.body) || !Id) {

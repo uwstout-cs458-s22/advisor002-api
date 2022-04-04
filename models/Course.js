@@ -51,6 +51,17 @@ async function findOne(criteria) {
   return {};
 }
 
+async function findAll(criteria, limit = 100, offset = 0) {
+  const { text, params } = whereParams(criteria);
+  const n = params.length;
+  const p = params.concat([limit, offset])
+  const res = await db.query(`SELECT * from "course" ${text} LIMIT $${n + 1} OFFSET $${n + 2};`, p);
+  log.debug(
+    `Retrieved ${res.rows.length} courses from db with criteria ${text}, ${JSON.stringify(params)}`
+  )
+  return res.rows;
+}
+
 // Edit given course's attributes
 // if successful update record in database, return row modified 'res'
 // if successful, but no row updates/returned, throw error
@@ -91,12 +102,12 @@ async function editCourse(id, resultCourse) {
   } else { // If missing parameters, throw error
     throw HttpError(400, 'Id and a course attribute required');
   }
-
 }
 
 
 module.exports = {
   deleteCourse,
   findOne,
+  findAll,
   editCourse
 };
