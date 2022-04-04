@@ -27,7 +27,7 @@ module.exports = () => {
   router.get('/:courseid', authorizeSession, async (req, res, next) => {
     try {
       const courseid = req.params.courseid;
-      const courses = await Course.findAll({courseid: courseid});
+      const courses = await Course.findAll({id: courseid});
       if(isEmpty(courses)) {
         throw new HttpError.NotFound();
       }
