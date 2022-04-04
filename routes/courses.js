@@ -15,7 +15,7 @@ module.exports = () => {
 
 
   // Find one course - STILL REQUIRES JEST/MOCK TESTS
-  router.get('/:id', authorizeSession, async (req, res, next) => {
+  router.get('/:id', async (req, res, next) => {
     try {
       const id = req.params.id;
       const course = await Course.findOne({
@@ -77,7 +77,7 @@ module.exports = () => {
     }
   });
 
-  router.get('/', authorizeSession, async (req, res, next) => {
+  router.get('/', async (req, res, next) => {
     try {
       const criteria = {};
 
