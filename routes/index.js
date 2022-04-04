@@ -4,7 +4,9 @@ const log = require('loglevel');
 
 module.exports = () => {
   const router = express.Router();
-  router.use(bodyParser.urlencoded({ extended: true }));
+  router.use(bodyParser.urlencoded({
+    extended: true
+  }));
   router.use(bodyParser.json());
   const usersRoutes = require('./users')();
   const courseRoutes = require('./courses')();

@@ -1,7 +1,10 @@
 const log = require('loglevel');
 const stytchwrapper = require('./stytchwrapper');
 const auth = require('./auth');
-const { getMockReq, getMockRes } = require('@jest-mock/express');
+const {
+  getMockReq,
+  getMockRes
+} = require('@jest-mock/express');
 
 beforeAll(() => {
   log.disableAll();
@@ -21,7 +24,11 @@ jest.mock('./stytchwrapper', () => {
   };
 });
 
-const { res, next, clearMockRes } = getMockRes({});
+const {
+  res,
+  next,
+  clearMockRes
+} = getMockRes({});
 
 describe('auth tests', () => {
   beforeEach(() => {
@@ -85,6 +92,7 @@ describe('auth tests', () => {
       }
     });
     stytchwrapper.authenticateStytchSession.mockResolvedValue({
+      // status_code: 200,
       status_code: 200,
       session: {
         user_id: 'user-test123456'

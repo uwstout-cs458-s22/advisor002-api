@@ -23,6 +23,7 @@ async function findOne(criteria) {
 // if found return [ {}, {} ... ]
 // if not found return []
 // if db error, db.query will throw a rejected promise
+
 async function findAll(criteria, query = null, limit = 100, offset = 0) {
   const { text, params } = whereParams(criteria, query);
   const n = params.length;
@@ -43,7 +44,10 @@ async function create(userId, email) {
   if (userId && email) {
     const enable = email === env.masterAdminEmail;
     const role = email === env.masterAdminEmail ? 'admin' : 'user';
-    const { text, params } = insertValues({
+    const {
+      text,
+      params
+    } = insertValues({
       userId: userId,
       email: email,
       enable: enable,
