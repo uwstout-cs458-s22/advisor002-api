@@ -1,7 +1,11 @@
 const HttpError = require('http-errors');
 const log = require('loglevel');
-const { authenticateStytchSession } = require('./stytchwrapper');
-const { isString } = require('./utils');
+const {
+  authenticateStytchSession
+} = require('./stytchwrapper');
+const {
+  isString
+} = require('./utils');
 
 async function authorizeSession(req, res, next) {
   const authHeader = req.headers.authorization;
@@ -28,3 +32,4 @@ async function authorizeSession(req, res, next) {
 module.exports = {
   authorizeSession
 };
+
