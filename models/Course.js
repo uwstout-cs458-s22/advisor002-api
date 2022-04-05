@@ -1,32 +1,17 @@
 const HttpError = require('http-errors');
 const log = require('loglevel');
 const { db } = require('../services/database');
-const { insertValues, whereParams, updateValues } = require('../services/sqltools');
-
-// if found return { ... }
-// if not found return {}
-// if db error, db.query will throw a rejected promise
-async function findOne(criteria) {
-  const { text, params } = whereParams(criteria);
-  const res = await db.query(`SELECT * from "course" ${text} LIMIT 1;`, params);
-  if (res.rows.length > 0) {
-    log.debug(
-      `Successfully found course from db with criteria: ${text}, ${JSON.stringify(params)}`
-    );
-    return res.rows[0];
-  }
-  log.debug(`No courses found in db with criteria: ${text}, ${JSON.stringify(params)}`);
-  return {};
-}
+const { insertValues, whereParams, updateValues, whereParamsCourses } = require('../services/sqltools');
 
 // All of the params are required
-async function createCourse( name, credits, section) {
+async function createCourse(name, section, credits) {
   if ( name && section && credits) {
     const { text, params } = insertValues({
       name: name,
       credits: credits,
       section: section,
     });
+
     if (findOne({ section: section }) !== {}) {
       const res = await db.query(`INSERT INTO "course" ${text} RETURNING *;`, params);
       if (res.rows.length > 0) {
@@ -35,9 +20,10 @@ async function createCourse( name, credits, section) {
             params
           )}`
         );
+
         return res.rows[0];
       }
-      throw HttpError(500, 'Inserted succesfully, without response');
+      throw HttpError(500, 'Inserted successfully, without response');
     } else {
       throw HttpError(500, `Course ${name} already exists in table "course"`);
     }
@@ -68,14 +54,47 @@ async function deleteCourse(Id) {
   }
 }
 
+// if found return { ... }
+// if not found return {}
+// if db error, db.query will throw a rejected promise
+async function findOne(criteria) {
+  // Use the course whereParams function to setup a prepared statement
+  const { text, params } = whereParamsCourses(criteria);
+  // Setup prepared statement to send to server with the variables
+  const res = await db.query(`SELECT * from "course" AS c ` +
+                                `JOIN "courseSemester" AS cs ON cs.courseId = c.id ` +
+                                `JOIN "semester" AS s ON s.id = cs.semesterId ` +
+                              `${text};`, params);
+
+  // If the result count is more than 0 than return the results gathered from the database
+  if (res.rows.length > 0) {
+    log.debug(`Successfully found course from db with criteria: ${text}, ${JSON.stringify(params)}`);
+    return res.rows[0];
+  }
+  log.debug(`No courses found in db with criteria: ${text}, ${JSON.stringify(params)}`);
+
+  // Otherwise return and empty object
+  return {};
+}
+
+// Find all courses matching given criteria
 async function findAll(criteria, limit = 100, offset = 0) {
-  const { text, params } = whereParams(criteria);
+  // Use the course whereParams function to setup a prepared statement
+  const { text, params } = whereParamsCourses(criteria);
+  // Calculate offset and limit position based on length of params
+  // and add them to the list of params for prepared statement
   const n = params.length;
   const p = params.concat([limit, offset])
-  const res = await db.query(`SELECT * from "course" ${text} LIMIT $${n + 1} OFFSET $${n + 2};`, p);
+  // Setup query and add variables for prepared statement and send it
+  const res = await db.query(`SELECT * from "course" AS c ` +
+                                `JOIN "courseSemester" AS cs ON cs.courseId = c.id ` +
+                                `JOIN "semester" AS s ON s.id = cs.semesterId ` +
+                              `${text} LIMIT $${n + 1} OFFSET $${n + 2};`, p);
   log.debug(
     `Retrieved ${res.rows.length} courses from db with criteria ${text}, ${JSON.stringify(params)}`
   )
+  
+  // Return the results
   return res.rows;
 }
 

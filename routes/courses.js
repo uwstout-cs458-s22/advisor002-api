@@ -12,10 +12,12 @@ module.exports = () => {
   // needs the id of the user making the request for authorization
   router.post('/', authorizeSession, async (req, res, next) => {
     try {
+
       const userId = res.locals.userId;
       const section = req.body[0].section;
       const name = req.body[0].name;
       const credits = req.body[0].credits;
+
       if (!name || !userId || !credits || !section) {
         throw HttpError(400, 'Required Parameters Missing');
       }
@@ -88,7 +90,31 @@ module.exports = () => {
       const criteria = {};
 
       if(req.query.credits) {
+        if(!parseInt(req.query.credits) && req.query.credits !== '0') {
+          throw HttpError(400, 'Credits must be a valid integer');
+        }
+
         criteria.credits = req.query.credits;
+      }
+
+      if(req.query.name) {
+        criteria.name = req.query.name;
+      }
+
+      if(req.query.type) {
+        if(req.query.type !== 'fall' && req.query.type !== 'spring' && req.query.type !== 'winter' && req.query.type !== 'summer') {
+          throw HttpError(400, 'Type must be one of fall, spring, summer, or winter');
+        }
+
+        criteria.type = req.query.type;
+      }
+
+      if(req.query.year) {
+        if (!parseInt(req.query.year)) {
+          throw HttpError(400, 'Year must be a valid integer');
+        }
+
+        criteria.year = req.query.year;
       }
 
       const courses = await Course.findAll(criteria,req.query.limit,req.query.offset);
@@ -101,7 +127,7 @@ module.exports = () => {
   router.get('/:courseid', authorizeSession, async (req, res, next) => {
     try {
       const courseid = req.params.courseid;
-      const courses = await Course.findAll({id: courseid});
+      const courses = await Course.findOne({id: courseid});
       if(isEmpty(courses)) {
         throw new HttpError.NotFound();
       }

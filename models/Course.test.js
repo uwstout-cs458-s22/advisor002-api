@@ -161,7 +161,7 @@ describe('Course Model', () => {
       await expect(Course.editCourse(row.id, putDoc)).rejects.toThrowError('Unexpected DB condition, update successful with no returned record');
     });
   });
-});
+}); 
 
  describe('test deleteCourse', () => {
       test('course delete', async () => {
@@ -201,7 +201,7 @@ describe('querying all courses', () => {
         const users = await Course.findAll();
         expect(db.query.mock.calls).toHaveLength(1);
         expect(db.query.mock.calls[0]).toHaveLength(2);
-        expect(db.query.mock.calls[0][0]).toBe('SELECT * from "course"  LIMIT $1 OFFSET $2;');
+        expect(db.query.mock.calls[0][0]).toBe('SELECT * from "course" AS c JOIN "courseSemester" AS cs ON cs.courseId = c.id JOIN "semester" AS s ON s.id = cs.semesterId  LIMIT $1 OFFSET $2;');
         expect(db.query.mock.calls[0][1]).toHaveLength(2);
         expect(db.query.mock.calls[0][1][0]).toBe(100);
         expect(db.query.mock.calls[0][1][1]).toBe(0);
@@ -220,7 +220,7 @@ describe('querying all courses', () => {
         expect(db.query.mock.calls).toHaveLength(1);
         expect(db.query.mock.calls[0]).toHaveLength(2);
         expect(db.query.mock.calls[0][0]).toBe(
-          'SELECT * from "course" WHERE "credits"=$1 LIMIT $2 OFFSET $3;'
+          'SELECT * from "course" AS c JOIN "courseSemester" AS cs ON cs.courseId = c.id JOIN "semester" AS s ON s.id = cs.semesterId WHERE c."credits"=$1 LIMIT $2 OFFSET $3;'
         );
         expect(db.query.mock.calls[0][1]).toHaveLength(3);
         expect(db.query.mock.calls[0][1][0]).toBe(3);
@@ -241,7 +241,7 @@ describe('querying all courses', () => {
         expect(db.query.mock.calls).toHaveLength(1);
         expect(db.query.mock.calls[0]).toHaveLength(2);
         expect(db.query.mock.calls[0][0]).toBe(
-          'SELECT * from "course" WHERE "credits"=$1 LIMIT $2 OFFSET $3;'
+          'SELECT * from "course" AS c JOIN "courseSemester" AS cs ON cs.courseId = c.id JOIN "semester" AS s ON s.id = cs.semesterId WHERE c."credits"=$1 LIMIT $2 OFFSET $3;'
         );
         expect(db.query.mock.calls[0][1]).toHaveLength(3);
         expect(db.query.mock.calls[0][1][0]).toBe(3);
@@ -262,7 +262,7 @@ describe('querying all courses', () => {
         expect(db.query.mock.calls).toHaveLength(1);
         expect(db.query.mock.calls[0]).toHaveLength(2);
         expect(db.query.mock.calls[0][0]).toBe(
-          'SELECT * from "course" WHERE "credits"=$1 LIMIT $2 OFFSET $3;'
+          'SELECT * from "course" AS c JOIN "courseSemester" AS cs ON cs.courseId = c.id JOIN "semester" AS s ON s.id = cs.semesterId WHERE c."credits"=$1 LIMIT $2 OFFSET $3;'
         );
         expect(db.query.mock.calls[0][1]).toHaveLength(3);
         expect(db.query.mock.calls[0][1][0]).toBe(3);

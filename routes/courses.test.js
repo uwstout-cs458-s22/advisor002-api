@@ -520,5 +520,45 @@ describe('Get /courses', () => {
       expect(response.statusCode).toBe(500);
       expect(response.body.error.message).toBe('Some Database Failure');
     });
+
+    test('should respond with 400 because credits is not an integer', async () => {
+      const data = dataForGetCourses(3);
+      Course.findAll.mockResolvedValueOnce(data);
+      const response = await request(app).get('/courses?credits=f');
+      expect(response.statusCode).toBe(400);
+      expect(response.body.error.message).toBe('Credits must be a valid integer');
+    });
+
+    test('should respond with 400 because semester is not in the accepted terms', async () => {
+      const data = dataForGetCourses(3);
+      Course.findAll.mockResolvedValueOnce(data);
+      const response = await request(app).get('/courses?type=f');
+      expect(response.statusCode).toBe(400);
+      expect(response.body.error.message).toBe('Type must be one of fall, spring, summer, or winter');
+    });
+
+    test('should respond with 400 because year is not a valid integer', async () => {
+      const data = dataForGetCourses(3);
+      Course.findAll.mockResolvedValueOnce(data);
+      const response = await request(app).get('/courses?year=f');
+      expect(response.statusCode).toBe(400);
+      expect(response.body.error.message).toBe('Year must be a valid integer');
+    });
+
+    test('should respond with 200 with name, credits, type, and year', async () => {
+      const data = dataForGetCourses(3);
+      Course.findAll.mockResolvedValueOnce(data);
+      await request(app).get('/courses?year=2019&name=blah&type=spring&credits=3');
+      expect(Course.findAll.mock.calls).toHaveLength(1);
+      expect(Course.findAll.mock.calls[0]).toHaveLength(3);
+      expect(Course.findAll.mock.calls[0][0]).toStrictEqual({
+        credits: '3',
+        name: 'blah',
+        type: 'spring',
+        year: '2019'
+      });
+      expect(Course.findAll.mock.calls[0][1]).toBeUndefined();
+      expect(Course.findAll.mock.calls[0][2]).toBeUndefined();
+    });
   });
 });
