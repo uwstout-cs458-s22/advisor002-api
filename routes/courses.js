@@ -102,7 +102,7 @@ module.exports = () => {
       }
 
       if(req.query.type) {
-        if(req.query.type != 'fall' && req.query.type != 'spring' && req.query.type != 'winter' && req.query.type != 'summer') {
+        if(req.query.type !== 'fall' && req.query.type !== 'spring' && req.query.type !== 'winter' && req.query.type !== 'summer') {
           throw HttpError(400, 'Type must be one of fall, spring, summer, or winter');
         }
 
@@ -127,7 +127,7 @@ module.exports = () => {
   router.get('/:courseid', async (req, res, next) => {
     try {
       const courseid = req.params.courseid;
-      const courses = await Course.findAll({id: courseid});
+      const courses = await Course.findOne({id: courseid});
       if(isEmpty(courses)) {
         throw new HttpError.NotFound();
       }
