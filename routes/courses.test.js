@@ -26,7 +26,6 @@ jest.mock('../models/Course.js', () => {
   return {
     findOne: jest.fn(),
     createCourse: jest.fn(),
-    deleteCourse: jest.fn(),
     findAll: jest.fn(),
     editCourse: jest.fn(),
     deleteCourse: jest.fn()
