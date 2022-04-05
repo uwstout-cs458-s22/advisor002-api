@@ -25,8 +25,8 @@ function dataForGetCourses(rows, offset = 0) {
 jest.mock('../models/Course.js', () => {
   return {
     findOne: jest.fn(),
+    createCourse: jest.fn(),
     findAll: jest.fn(),
-    // create: jest.fn(),
     editCourse: jest.fn(),
     deleteCourse: jest.fn()
   };
@@ -344,7 +344,75 @@ describe('PUT /courses', () => {
   });
 });
 
+describe('POST /courses', () => {
+  beforeEach(() => {
+    Course.findOne.mockReset();
+    Course.findOne.mockResolvedValue(null);
+    User.findOne.mockReset();
+    User.findOne.mockResolvedValue(null);
+  });
 
+  test('should return 400 errror when create course parameters missing', async () =>  {
+    User.findOne.mockResolvedValueOnce({id: 12345,
+      email: `emailmine@uwstout.edu`,
+      userId: `user-test-someguid`,
+      enable: 'false',
+      role: 'user'});
+
+    const fakeCourse = {name: 'operating systems', credits: 4, section: 2};
+    Course.findOne.mockResolvedValueOnce(fakeCourse);
+
+    const response = await request(app).post('/courses').send([{}]);
+
+    expect(response.statusCode).toBe(400);
+  });
+
+  test('User should not be allowed to create course', async () =>  {
+    User.findOne.mockResolvedValueOnce({id: 12345,
+      email: `emailmine@uwstout.edu`,
+      userId: `user-test-someguid`,
+      enable: 'false',
+      role: 'user'})
+
+    const response = await request(app).post('/courses').send([{
+      section: 505,
+      name: `course name`,
+      credits: 3}]);
+    expect(response.statusCode).toBe(403);
+  });
+
+  test('Admin should not be allowed to create course', async () =>  {
+
+    User.findOne.mockResolvedValueOnce({id: 12345,
+      email: `emailmine@uwstout.edu`,
+      userId: `user-test-someguid`,
+      enable: 'false',
+      role: 'admin'})
+
+    const response = await request(app).post('/courses').send([{
+      section: 505,
+      name: `course name`,
+      credits: 3}]);
+    expect(response.statusCode).toBe(403);
+  });
+
+  test('Director should be allowed to create course', async () =>  {
+
+    User.findOne.mockResolvedValueOnce({id: 12345,
+      email: `emailmine@uwstout.edu`,
+      userId: `user-test-someguid`,
+      enable: 'false',
+      role: 'director'})
+
+    Course.deleteCourse.mockResolvedValueOnce(`Successfully deleted course from db`);
+
+    const response = await request(app).post('/courses').send([{ 
+      section: 505,
+      name: `course name`,
+      credits: 3}]);
+    expect(response.statusCode).toBe(201);
+  });
+});
 describe('Get /courses', () => {
   beforeEach(() => {
     Course.findOne.mockReset();
@@ -451,6 +519,46 @@ describe('Get /courses', () => {
       const response = await request(app).get('/courses');
       expect(response.statusCode).toBe(500);
       expect(response.body.error.message).toBe('Some Database Failure');
+    });
+
+    test('should respond with 400 because credits is not an integer', async () => {
+      const data = dataForGetCourses(3);
+      Course.findAll.mockResolvedValueOnce(data);
+      const response = await request(app).get('/courses?credits=f');
+      expect(response.statusCode).toBe(400);
+      expect(response.body.error.message).toBe('Credits must be a valid integer');
+    });
+
+    test('should respond with 400 because semester is not in the accepted terms', async () => {
+      const data = dataForGetCourses(3);
+      Course.findAll.mockResolvedValueOnce(data);
+      const response = await request(app).get('/courses?type=f');
+      expect(response.statusCode).toBe(400);
+      expect(response.body.error.message).toBe('Type must be one of fall, spring, summer, or winter');
+    });
+
+    test('should respond with 400 because year is not a valid integer', async () => {
+      const data = dataForGetCourses(3);
+      Course.findAll.mockResolvedValueOnce(data);
+      const response = await request(app).get('/courses?year=f');
+      expect(response.statusCode).toBe(400);
+      expect(response.body.error.message).toBe('Year must be a valid integer');
+    });
+
+    test('should respond with 200 with name, credits, type, and year', async () => {
+      const data = dataForGetCourses(3);
+      Course.findAll.mockResolvedValueOnce(data);
+      await request(app).get('/courses?year=2019&name=blah&type=spring&credits=3');
+      expect(Course.findAll.mock.calls).toHaveLength(1);
+      expect(Course.findAll.mock.calls[0]).toHaveLength(3);
+      expect(Course.findAll.mock.calls[0][0]).toStrictEqual({
+        credits: '3',
+        name: 'blah',
+        type: 'spring',
+        year: '2019'
+      });
+      expect(Course.findAll.mock.calls[0][1]).toBeUndefined();
+      expect(Course.findAll.mock.calls[0][2]).toBeUndefined();
     });
   });
 });

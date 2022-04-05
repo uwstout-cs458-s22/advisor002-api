@@ -1,36 +1,44 @@
 const express = require('express');
 const log = require('loglevel');
 const HttpError = require('http-errors');
-const {
-  isEmpty
-} = require('../services/utils');
-const Course = require('../models/Course');
-const User = require('../models/User');
-const {
-  authorizeSession
-} = require('../services/auth');
+const { authorizeSession } = require('./../services/auth');
+const Course = require('./../models/Course');
+const User = require('./../models/User');
+const { isEmpty } = require('./../services/utils');
 
 module.exports = () => {
   const router = express.Router();
 
-
-  // Find one course - STILL REQUIRES JEST/MOCK TESTS
-  router.get('/:id', authorizeSession, async (req, res, next) => {
+  // needs the id of the user making the request for authorization
+  router.post('/', authorizeSession, async (req, res, next) => {
     try {
-      const id = req.params.id;
-      const course = await Course.findOne({
-        id: id
-      });
-      if (isEmpty(course)) {
-        throw new HttpError.NotFound();
+
+      const userId = res.locals.userId;
+      const section = req.body[0].section;
+      const name = req.body[0].name;
+      const credits = req.body[0].credits;
+
+      if (!name || !userId || !credits || !section) {
+        throw HttpError(400, 'Required Parameters Missing');
       }
-      log.info(`${req.method} ${req.originalUrl} success: returning course ${id}`);
-      return res.send(course);
-    } catch (error) {
+      const user = await User.findOne({ userId: userId });
+      if (user.role !== 'director') {
+        throw HttpError(
+          403,
+          `requester ${user.email} does not have permissions to create a course`
+        );
+      } else {
+        const course = await Course.createCourse(name, credits, section);
+        res.status(201); // otherwise
+        res.setHeader('Location', `/courses/${name}`);
+        log.info(`${req.method} ${req.originalUrl} success: returning course ${name}}`);
+        return res.send(course);
+      }
+    } catch(error) {
       next(error);
     }
   });
-
+  
   // Edit a course (PUT request)
   // Access via http://localhost:3000/courses/# (# is the id of the course to edit)
   // PUT body should contain JSON for course name, section, credits
@@ -83,11 +91,35 @@ module.exports = () => {
     try {
       const criteria = {};
 
-      if (req.query.credits) {
+      if(req.query.credits) {
+        if(!parseInt(req.query.credits) && req.query.credits !== '0') {
+          throw HttpError(400, 'Credits must be a valid integer');
+        }
+
         criteria.credits = req.query.credits;
       }
 
-      const courses = await Course.findAll(criteria, req.query.limit, req.query.offset);
+      if(req.query.name) {
+        criteria.name = req.query.name;
+      }
+
+      if(req.query.type) {
+        if(req.query.type !== 'fall' && req.query.type !== 'spring' && req.query.type !== 'winter' && req.query.type !== 'summer') {
+          throw HttpError(400, 'Type must be one of fall, spring, summer, or winter');
+        }
+
+        criteria.type = req.query.type;
+      }
+
+      if(req.query.year) {
+        if (!parseInt(req.query.year)) {
+          throw HttpError(400, 'Year must be a valid integer');
+        }
+
+        criteria.year = req.query.year;
+      }
+
+      const courses = await Course.findAll(criteria,req.query.limit,req.query.offset);
       return res.send(courses)
     } catch (error) {
       next(error);
@@ -97,10 +129,8 @@ module.exports = () => {
   router.get('/:courseid', authorizeSession, async (req, res, next) => {
     try {
       const courseid = req.params.courseid;
-      const courses = await Course.findAll({
-        id: courseid
-      });
-      if (isEmpty(courses)) {
+      const courses = await Course.findOne({id: courseid});
+      if(isEmpty(courses)) {
         throw new HttpError.NotFound();
       }
       log.info(`${req.method} ${req.originalUrl} success: returning courses ${courseid}`);
