@@ -11,9 +11,6 @@ const {
   updateValues
 } = require('../services/sqltools');
 // const env = require('../services/environment');
-const {
-  Category
-} = require('./Category');
 
 // if successful delete return id
 // if successful, but not deleted, throw error
@@ -78,16 +75,12 @@ async function editCourse(id, resultCourse) {
 
     // See if a prefix was changed
     let prefixFlag = false
-    let resPrefix
 
     // If wanting to change the prefix/category
     if (resultCourse.prefix) {
 
-
-
       // Grab the id of the prefix entered
-      // SELECT id FROM category WHERE prefix='CS';
-      const tempCategoryId = await db.query(`SELECT id FROM category WHERE prefix='${resultCourse.prefix}'`);
+      const tempCategoryId = await db.query(`SELECT id FROM category WHERE prefix='${resultCourse.prefix}';`);
 
       // If valid prefix
       if (typeof tempCategoryId.rows[0] !== 'undefined') {
@@ -104,31 +97,26 @@ async function editCourse(id, resultCourse) {
         params.forEach(x => {
           paramList.push(x);
         });
-
         paramList.push(id);
 
-        resPrefix = await db.query(`UPDATE "courseCategory" ${text} WHERE courseid = $${n + 1} RETURNING *;`, paramList);
-        // return res.rows[0];
+        const resPrefix = await db.query(`UPDATE "courseCategory" ${text} WHERE courseid = $${n + 1} RETURNING *;`, paramList);
+
         if (!(resPrefix.rows.length > 0)) {
           log.debug(
             `Problem updating course category with id ${id} in the database with the data ${JSON.stringify(resultCourse)}`
           );
-          return resPrefix.rows[0];
+          throw HttpError(500, 'Unexpected DB condition'); // New
         } else {
           prefixFlag = true
         }
       } else {
-        throw HttpError(404, 'Class prefix not found');
+        throw HttpError(400, 'Invalid category prefix');
       }
-      // If not, throw error
-      // throw HttpError(500, 'Unexpected DB condition relating to category, update successful with no returned record');
     }
 
-    // Then update the rest (name, section, credits)
-    // UPDATE "course" SET name = 'updated', "section" = 5, credits = 5 WHERE id = 1 RETURNING *
-
+    // THEN update the rest (name, section, credits)
     // Check if any are null, if all are null then you should skip this part and only submit the prefix IF a prefix was submitted (prefix flag)
-    if (!(resultCourse.name == null) || !(resultCourse.name == null) || !(resultCourse.name == null)) {
+    if (!(resultCourse.name == null) || !(resultCourse.section == null) || !(resultCourse.credits == null)) {
 
       const newCourseJSON = {}
 
@@ -161,17 +149,26 @@ async function editCourse(id, resultCourse) {
         log.debug(
           `Successfully updated course with id ${id} in the database with the data ${JSON.stringify(resultCourse)}`
         );
-        return res.rows[0];
+        // Return all course info AND category prefix
+        const result = await db.query(`SELECT course.id, course.name, course.credits, course.section, category.prefix FROM course ` +
+          `INNER JOIN "courseCategory" ON "courseCategory".courseid = "course".id ` +
+          `INNER JOIN "category" ON "category".id = "courseCategory".categoryid WHERE course.id = ${id} LIMIT 1;`);
+        return result.rows[0];
       } // If not, throw error
       throw HttpError(500, 'Unexpected DB condition, update successful with no returned record');
 
     }
-    // else {
-    //   throw HttpError(400, 'thingy thing');
 
-    // If a prefix flag was submitted but nothing else
+    // If a prefix (flag) was submitted but nothing else
     if (prefixFlag) {
-      return resPrefix.rows[0];
+      // Return all data about course (we already sent the category in)
+      const res = await db.query(`SELECT course.id, course.name, course.credits, course.section, category.prefix FROM course ` +
+        `INNER JOIN "courseCategory" ON "courseCategory".courseid = "course".id ` +
+        `INNER JOIN "category" ON "category".id = "courseCategory".categoryid WHERE course.id = ${id} LIMIT 1;`);
+      return res.rows[0];
+
+    } else {
+      throw HttpError(400, 'Course attributes required');
     }
 
   } else { // If missing parameters, throw error

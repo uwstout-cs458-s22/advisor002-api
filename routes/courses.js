@@ -63,22 +63,6 @@ module.exports = () => {
             prefix: req.body.prefix
           };
 
-          // Prevent attributes from becoming 'null' if not entered to edit
-          // const newCourseJSON = {};
-          // if (!(req.body.name === null))
-          //   newCourseJSON.name = req.body.name
-
-          // if (!(req.body.section === null))
-          //   newCourseJSON.section = req.body.section
-
-          // if (!(req.body.credits === null))
-          //   newCourseJSON.credits = req.body.credits
-
-          // if (!(req.body.prefix === null))
-          //   newCourseJSON.prefix = req.body.prefix
-
-
-
           // Call the function to edit the course parameters and return results
           const updatedCourse = await Course.editCourse(id, newCourseJSON);
           res.status(200);
