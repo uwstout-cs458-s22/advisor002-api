@@ -34,23 +34,34 @@ async function deleteCourse(Id) {
 // if not found return {}
 // if db error, db.query will throw a rejected promise
 async function findOne(criteria) {
+  // Use the course whereParams function to setup a prepared statement
   const { text, params } = whereParamsCourses(criteria);
+  // Setup prepared statement to send to server with the variables
   const res = await db.query(`SELECT * from "course" AS c ` +
                                 `JOIN "courseSemester" AS cs ON cs.courseId = c.id ` +
                                 `JOIN "semester" AS s ON s.id = cs.semesterId ` +
                               `${text};`, params);
+
+  // If the result count is more than 0 than return the results gathered from the database
   if (res.rows.length > 0) {
     log.debug(`Successfully found course from db with criteria: ${text}, ${JSON.stringify(params)}`);
     return res.rows[0];
   }
   log.debug(`No courses found in db with criteria: ${text}, ${JSON.stringify(params)}`);
+
+  // Otherwise return and empty object
   return {};
 }
 
+// Find all courses matching given criteria
 async function findAll(criteria, limit = 100, offset = 0) {
+  // Use the course whereParams function to setup a prepared statement
   const { text, params } = whereParamsCourses(criteria);
+  // Calculate offset and limit position based on length of params
+  // and add them to the list of params for prepared statement
   const n = params.length;
   const p = params.concat([limit, offset])
+  // Setup query and add variables for prepared statement and send it
   const res = await db.query(`SELECT * from "course" AS c ` +
                                 `JOIN "courseSemester" AS cs ON cs.courseId = c.id ` +
                                 `JOIN "semester" AS s ON s.id = cs.semesterId ` +
@@ -58,6 +69,8 @@ async function findAll(criteria, limit = 100, offset = 0) {
   log.debug(
     `Retrieved ${res.rows.length} courses from db with criteria ${text}, ${JSON.stringify(params)}`
   )
+  
+  // Return the results
   return res.rows;
 }
 

@@ -91,7 +91,7 @@ function whereParamsCourses(values) {
     const text =
       'WHERE ' +
       Object.keys(values)
-        .map((col, index) => `c."${col}"=$${index + 1}`)
+        .map((col, index) => (col === 'id' || col === 'credits' || col === 'name') ? `c."${col}"=$${index + 1}` : `${col}=$${index+1}`)
         .join(' AND ');
     return { text: text, params: Object.values(values) };
   }
