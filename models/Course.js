@@ -1,32 +1,17 @@
 const HttpError = require('http-errors');
 const log = require('loglevel');
 const { db } = require('../services/database');
-const { insertValues, whereParams, updateValues } = require('../services/sqltools');
-
-// if found return { ... }
-// if not found return {}
-// if db error, db.query will throw a rejected promise
-async function findOne(criteria) {
-  const { text, params } = whereParams(criteria);
-  const res = await db.query(`SELECT * from "course" ${text} LIMIT 1;`, params);
-  if (res.rows.length > 0) {
-    log.debug(
-      `Successfully found course from db with criteria: ${text}, ${JSON.stringify(params)}`
-    );
-    return res.rows[0];
-  }
-  log.debug(`No courses found in db with criteria: ${text}, ${JSON.stringify(params)}`);
-  return {};
-}
+const { insertValues, whereParams, updateValues, whereParamsCourses } = require('../services/sqltools');
 
 // All of the params are required
-async function createCourse( name, credits, section) {
-  if ( name && section && credits) {
+async function createCourse(newCourse) {
+  if ( newCourse.name && newCourse.section && newCourse.credits) {
     const { text, params } = insertValues({
-      name: name,
-      credits: credits,
-      section: section,
+      name: newCourse.name,
+      credits: newCourse.credits,
+      section: newCourse.section,
     });
+
     if (findOne({ section: section }) !== {}) {
       const res = await db.query(`INSERT INTO "course" ${text} RETURNING *;`, params);
       if (res.rows.length > 0) {
@@ -35,9 +20,10 @@ async function createCourse( name, credits, section) {
             params
           )}`
         );
+        
         return res.rows[0];
       }
-      throw HttpError(500, 'Inserted succesfully, without response');
+      throw HttpError(500, 'Inserted successfully, without response');
     } else {
       throw HttpError(500, `Course ${name} already exists in table "course"`);
     }

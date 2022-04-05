@@ -161,7 +161,7 @@ describe('Course Model', () => {
       await expect(Course.editCourse(row.id, putDoc)).rejects.toThrowError('Unexpected DB condition, update successful with no returned record');
     });
   });
-});
+}); 
 
  describe('test deleteCourse', () => {
       test('course delete', async () => {
