@@ -1,12 +1,5 @@
 const log = require('loglevel');
-<<<<<<< HEAD
 const { db } = require('../services/database');
-=======
-const {
-  db
-} = require('../services/database');
-// const env = require('../services/environment');
->>>>>>> staging
 const Course = require('./Course');
 
 // const env = require('../services/environment');
@@ -60,7 +53,6 @@ function dataForDeleteCourse(rows, offset = 0) {
   return data;
 }
 
-<<<<<<< HEAD
 function createCourseData(name) {
   const data = {
     name: `${name}`,
@@ -69,8 +61,6 @@ function createCourseData(name) {
   };
   return data;
 }
-=======
->>>>>>> staging
 
 describe('Course Model', () => {
   beforeEach(() => {
@@ -78,7 +68,6 @@ describe('Course Model', () => {
     db.query.mockResolvedValue(null);
   });
 
-<<<<<<< HEAD
   describe('test deleteCourse', () => {
     // requires create course
     //       test('course delete', async () => {
@@ -118,8 +107,7 @@ describe('Course Model', () => {
       expect(db.query.mock.calls).toHaveLength(2);
     });
   });
-});
-=======
+
 
   describe('Edit a Course', () => {
     test('Edit a course to have new name, credits, courseId', async () => {
@@ -293,5 +281,3 @@ describe('querying all courses', () => {
         await expect(Course.findAll()).rejects.toThrowError('a testing database error');
       });
  });
-
->>>>>>> staging

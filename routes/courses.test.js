@@ -25,15 +25,11 @@ function dataForGetCourses(rows, offset = 0) {
 jest.mock('../models/Course.js', () => {
   return {
     findOne: jest.fn(),
-<<<<<<< HEAD
     createCourse: jest.fn(),
     deleteCourse: jest.fn(),
-=======
     findAll: jest.fn(),
-    // create: jest.fn(),
     editCourse: jest.fn(),
     deleteCourse: jest.fn()
->>>>>>> staging
   };
 });
 
@@ -349,11 +345,6 @@ describe('PUT /courses', () => {
   });
 });
 
-
-<<<<<<< HEAD
-});
-
-
 describe('POST /courses', () => {
   beforeEach(() => {
     Course.findOne.mockReset();
@@ -423,7 +414,6 @@ describe('POST /courses', () => {
     expect(response.statusCode).toBe(201);
   });
 });
-=======
 describe('Get /courses', () => {
   beforeEach(() => {
     Course.findOne.mockReset();
@@ -533,4 +523,3 @@ describe('Get /courses', () => {
     });
   });
 });
->>>>>>> staging

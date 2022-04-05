@@ -1,53 +1,14 @@
 const express = require('express');
 const log = require('loglevel');
 const HttpError = require('http-errors');
-<<<<<<< HEAD
 const { authorizeSession } = require('./../services/auth');
 const Course = require('./../models/Course');
 const User = require('./../models/User');
 const { isEmpty } = require('./../services/utils');
-=======
-const {
-  isEmpty
-} = require('../services/utils');
-const Course = require('../models/Course');
-const User = require('../models/User');
-const {
-  authorizeSession
-} = require('../services/auth');
->>>>>>> staging
 
 module.exports = () => {
   const router = express.Router();
 
-<<<<<<< HEAD
-  // not currently used, but searches for a course based on id
-  router.get('/:id', authorizeSession, async (req, res, next) => {
-    try {
-      const id = req.params.id;
-      const course = await Course.findOneCourse({
-        id: id,
-=======
-
-  // Find one course - STILL REQUIRES JEST/MOCK TESTS
-  router.get('/:id', authorizeSession, async (req, res, next) => {
-    try {
-      const id = req.params.id;
-      const course = await Course.findOne({
-        id: id
->>>>>>> staging
-      });
-      if (isEmpty(course)) {
-        throw new HttpError.NotFound();
-      }
-      log.info(`${req.method} ${req.originalUrl} success: returning course ${id}`);
-      return res.send(course);
-    } catch (error) {
-      next(error);
-    }
-  });
-
-<<<<<<< HEAD
   // needs the id of the user making the request for authorization
   router.post('/', authorizeSession, async (req, res, next) => {
     try {
@@ -72,7 +33,10 @@ module.exports = () => {
         return res.send(course);
       }
     } catch(error) {
-=======
+      next(error);
+    }
+  });
+  
   // Edit a course (PUT request)
   // Access via http://localhost:3000/courses/# (# is the id of the course to edit)
   // PUT body should contain JSON for course name, section, credits
@@ -115,13 +79,10 @@ module.exports = () => {
         }
       }
     } catch (error) {
->>>>>>> staging
       next(error);
     }
   });
 
-<<<<<<< HEAD
-=======
   router.get('/', authorizeSession, async (req, res, next) => {
     try {
       const criteria = {};
@@ -152,7 +113,6 @@ module.exports = () => {
     }
   })
   
->>>>>>> staging
   router.delete('/', authorizeSession, async (req, res, next) => {
     try {
       const Id = req.body.id;
