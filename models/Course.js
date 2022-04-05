@@ -4,7 +4,7 @@ const { db } = require('../services/database');
 const { insertValues, whereParams, updateValues, whereParamsCourses } = require('../services/sqltools');
 
 // All of the params are required
-async function createCourse(name, section, credits) {
+async function createCourse(name, credits, section) {
   if ( name && section && credits) {
     const { text, params } = insertValues({
       name: name,
