@@ -4,12 +4,12 @@ const { db } = require('../services/database');
 const { insertValues, whereParams, updateValues, whereParamsCourses } = require('../services/sqltools');
 
 // All of the params are required
-async function createCourse(newCourse) {
-  if ( newCourse.name && newCourse.section && newCourse.credits) {
+async function createCourse(name, section, credits) {
+  if ( name && section && credits) {
     const { text, params } = insertValues({
-      name: newCourse.name,
-      credits: newCourse.credits,
-      section: newCourse.section,
+      name: name,
+      credits: credits,
+      section: section,
     });
 
     if (findOne({ section: section }) !== {}) {
@@ -20,7 +20,7 @@ async function createCourse(newCourse) {
             params
           )}`
         );
-        
+
         return res.rows[0];
       }
       throw HttpError(500, 'Inserted successfully, without response');

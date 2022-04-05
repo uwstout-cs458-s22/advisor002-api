@@ -12,15 +12,13 @@ module.exports = () => {
   // needs the id of the user making the request for authorization
   router.post('/', authorizeSession, async (req, res, next) => {
     try {
-      const userId = res.locals.userId;
 
-      const newCourse = {
-        section: req.body[0].section,
-        name: req.body[0].name,
-        credits: req.body[0].credits,
-        semester: req.body[0].semester
-      }
-      if (!newCourse.name || !newCourse.userId || !newCourse.credits || !newCourse.section) {
+      const userId = res.locals.userId;
+      const section = req.body[0].section;
+      const name = req.body[0].name;
+      const credits = req.body[0].credits;
+
+      if (!name || !userId || !credits || !section) {
         throw HttpError(400, 'Required Parameters Missing');
       }
       const user = await User.findOne({ userId: userId });
@@ -30,7 +28,7 @@ module.exports = () => {
           `requester ${user.email} does not have permissions to create a course`
         );
       } else {
-        const course = await Course.createCourse(newCourse);
+        const course = await Course.createCourse(name, credits, section);
         res.status(201); // otherwise
         res.setHeader('Location', `/courses/${name}`);
         log.info(`${req.method} ${req.originalUrl} success: returning course ${name}}`);
@@ -104,8 +102,8 @@ module.exports = () => {
       }
 
       if(req.query.type) {
-        if(req.query.type !== 'fall' && req.query.type !== 'spring' && req.query.type !== 'winter' && req.query.type !=+ 'summer') {
-          throw HttpError(400, 'Year must be one of fall, spring, summer, or winter');
+        if(req.query.type != 'fall' && req.query.type != 'spring' && req.query.type != 'winter' && req.query.type != 'summer') {
+          throw HttpError(400, 'Type must be one of fall, spring, summer, or winter');
         }
 
         criteria.type = req.query.type;
@@ -129,7 +127,7 @@ module.exports = () => {
   router.get('/:courseid', async (req, res, next) => {
     try {
       const courseid = req.params.courseid;
-      const courses = await Course.findOne({id: courseid});
+      const courses = await Course.findAll({id: courseid});
       if(isEmpty(courses)) {
         throw new HttpError.NotFound();
       }
