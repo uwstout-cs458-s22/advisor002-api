@@ -25,8 +25,8 @@ function dataForGetCourses(rows, offset = 0) {
 jest.mock('../models/Course.js', () => {
   return {
     findOne: jest.fn(),
+    createCourse: jest.fn(),
     findAll: jest.fn(),
-    // create: jest.fn(),
     editCourse: jest.fn(),
     deleteCourse: jest.fn()
   };
@@ -344,7 +344,75 @@ describe('PUT /courses', () => {
   });
 });
 
+describe('POST /courses', () => {
+  beforeEach(() => {
+    Course.findOne.mockReset();
+    Course.findOne.mockResolvedValue(null);
+    User.findOne.mockReset();
+    User.findOne.mockResolvedValue(null);
+  });
 
+  test('should return 400 errror when create course parameters missing', async () =>  {
+    User.findOne.mockResolvedValueOnce({id: 12345,
+      email: `emailmine@uwstout.edu`,
+      userId: `user-test-someguid`,
+      enable: 'false',
+      role: 'user'});
+
+    const fakeCourse = {name: 'operating systems', credits: 4, section: 2};
+    Course.findOne.mockResolvedValueOnce(fakeCourse);
+
+    const response = await request(app).post('/courses').send([{}]);
+
+    expect(response.statusCode).toBe(400);
+  });
+
+  test('User should not be allowed to create course', async () =>  {
+    User.findOne.mockResolvedValueOnce({id: 12345,
+      email: `emailmine@uwstout.edu`,
+      userId: `user-test-someguid`,
+      enable: 'false',
+      role: 'user'})
+
+    const response = await request(app).post('/courses').send([{
+      section: 505,
+      name: `course name`,
+      credits: 3}]);
+    expect(response.statusCode).toBe(403);
+  });
+
+  test('Admin should not be allowed to create course', async () =>  {
+
+    User.findOne.mockResolvedValueOnce({id: 12345,
+      email: `emailmine@uwstout.edu`,
+      userId: `user-test-someguid`,
+      enable: 'false',
+      role: 'admin'})
+
+    const response = await request(app).post('/courses').send([{
+      section: 505,
+      name: `course name`,
+      credits: 3}]);
+    expect(response.statusCode).toBe(403);
+  });
+
+  test('Director should be allowed to create course', async () =>  {
+
+    User.findOne.mockResolvedValueOnce({id: 12345,
+      email: `emailmine@uwstout.edu`,
+      userId: `user-test-someguid`,
+      enable: 'false',
+      role: 'director'})
+
+    Course.deleteCourse.mockResolvedValueOnce(`Successfully deleted course from db`);
+
+    const response = await request(app).post('/courses').send([{ 
+      section: 505,
+      name: `course name`,
+      credits: 3}]);
+    expect(response.statusCode).toBe(201);
+  });
+});
 describe('Get /courses', () => {
   beforeEach(() => {
     Course.findOne.mockReset();

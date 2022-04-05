@@ -1,36 +1,42 @@
 const express = require('express');
 const log = require('loglevel');
 const HttpError = require('http-errors');
-const {
-  isEmpty
-} = require('../services/utils');
-const Course = require('../models/Course');
-const User = require('../models/User');
-const {
-  authorizeSession
-} = require('../services/auth');
+const { authorizeSession } = require('./../services/auth');
+const Course = require('./../models/Course');
+const User = require('./../models/User');
+const { isEmpty } = require('./../services/utils');
 
 module.exports = () => {
   const router = express.Router();
 
-
-  // Find one course - STILL REQUIRES JEST/MOCK TESTS
-  router.get('/:id', async (req, res, next) => {
+  // needs the id of the user making the request for authorization
+  router.post('/', authorizeSession, async (req, res, next) => {
     try {
-      const id = req.params.id;
-      const course = await Course.findOne({
-        id: id
-      });
-      if (isEmpty(course)) {
-        throw new HttpError.NotFound();
+      const userId = res.locals.userId;
+      const section = req.body[0].section;
+      const name = req.body[0].name;
+      const credits = req.body[0].credits;
+      if (!name || !userId || !credits || !section) {
+        throw HttpError(400, 'Required Parameters Missing');
       }
-      log.info(`${req.method} ${req.originalUrl} success: returning course ${id}`);
-      return res.send(course);
-    } catch (error) {
+      const user = await User.findOne({ userId: userId });
+      if (user.role !== 'director') {
+        throw HttpError(
+          403,
+          `requester ${user.email} does not have permissions to create a course`
+        );
+      } else {
+        const course = await Course.createCourse(name, credits, section);
+        res.status(201); // otherwise
+        res.setHeader('Location', `/courses/${name}`);
+        log.info(`${req.method} ${req.originalUrl} success: returning course ${name}}`);
+        return res.send(course);
+      }
+    } catch(error) {
       next(error);
     }
   });
-
+  
   // Edit a course (PUT request)
   // Access via http://localhost:3000/courses/# (# is the id of the course to edit)
   // PUT body should contain JSON for course name, section, credits
