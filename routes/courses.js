@@ -36,6 +36,7 @@ module.exports = () => {
   // PUT body should contain JSON for course name, section, credits
   router.put('/:id', authorizeSession, async (req, res, next) => {
     try {
+
       // Get the course to edit and make sure it exists in database
       const id = req.params.id;
       const course = await Course.findOne({
@@ -58,8 +59,25 @@ module.exports = () => {
           const newCourseJSON = {
             name: req.body.name,
             section: req.body.section,
-            credits: req.body.credits
+            credits: req.body.credits,
+            prefix: req.body.prefix
           };
+
+          // Prevent attributes from becoming 'null' if not entered to edit
+          // const newCourseJSON = {};
+          // if (!(req.body.name === null))
+          //   newCourseJSON.name = req.body.name
+
+          // if (!(req.body.section === null))
+          //   newCourseJSON.section = req.body.section
+
+          // if (!(req.body.credits === null))
+          //   newCourseJSON.credits = req.body.credits
+
+          // if (!(req.body.prefix === null))
+          //   newCourseJSON.prefix = req.body.prefix
+
+
 
           // Call the function to edit the course parameters and return results
           const updatedCourse = await Course.editCourse(id, newCourseJSON);
@@ -81,11 +99,11 @@ module.exports = () => {
     try {
       const criteria = {};
 
-      if(req.query.credits) {
+      if (req.query.credits) {
         criteria.credits = req.query.credits;
       }
 
-      const courses = await Course.findAll(criteria,req.query.limit,req.query.offset);
+      const courses = await Course.findAll(criteria, req.query.limit, req.query.offset);
       return res.send(courses)
     } catch (error) {
       next(error);
@@ -95,35 +113,41 @@ module.exports = () => {
   router.get('/:courseid', authorizeSession, async (req, res, next) => {
     try {
       const courseid = req.params.courseid;
-      const courses = await Course.findAll({id: courseid});
-      if(isEmpty(courses)) {
+      const courses = await Course.findAll({
+        id: courseid
+      });
+      if (isEmpty(courses)) {
         throw new HttpError.NotFound();
       }
       log.info(`${req.method} ${req.originalUrl} success: returning courses ${courseid}`);
       return res.send(courses);
 
-    } catch(error) {
+    } catch (error) {
       next(error);
     }
   })
-  
+
   router.delete('/', authorizeSession, async (req, res, next) => {
     try {
       const Id = req.body.id;
       if (isEmpty(req.body) || !Id) {
         throw new HttpError.BadRequest('Required parameters are missing');
       }
-      if(res.locals.userId == null) {
-        throw new HttpError.Forbidden('You are not allowed to do this'); 
-      }
-      const sender = await User.findOne({ userId: res.locals.userId });
-      if(!sender || isEmpty(sender)) {
-        throw new HttpError.Forbidden('You are not allowed to do this'); 
-      }
-      if(!(sender.role === 'director')) {
+      if (res.locals.userId == null) {
         throw new HttpError.Forbidden('You are not allowed to do this');
       }
-      const course = await Course.findOne({ id: Id });
+      const sender = await User.findOne({
+        userId: res.locals.userId
+      });
+      if (!sender || isEmpty(sender)) {
+        throw new HttpError.Forbidden('You are not allowed to do this');
+      }
+      if (!(sender.role === 'director')) {
+        throw new HttpError.Forbidden('You are not allowed to do this');
+      }
+      const course = await Course.findOne({
+        id: Id
+      });
       if (isEmpty(course)) {
         throw new HttpError.NotFound();
       }

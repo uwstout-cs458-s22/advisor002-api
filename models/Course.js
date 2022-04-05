@@ -11,6 +11,9 @@ const {
   updateValues
 } = require('../services/sqltools');
 // const env = require('../services/environment');
+const {
+  Category
+} = require('./Category');
 
 // if successful delete return id
 // if successful, but not deleted, throw error
@@ -52,7 +55,10 @@ async function findOne(criteria) {
 }
 
 async function findAll(criteria, limit = 100, offset = 0) {
-  const { text, params } = whereParams(criteria);
+  const {
+    text,
+    params
+  } = whereParams(criteria);
   const n = params.length;
   const p = params.concat([limit, offset])
   const res = await db.query(`SELECT * from "course" ${text} LIMIT $${n + 1} OFFSET $${n + 2};`, p);
@@ -70,34 +76,103 @@ async function findAll(criteria, limit = 100, offset = 0) {
 async function editCourse(id, resultCourse) {
   if (id && resultCourse) {
 
+    // See if a prefix was changed
+    let prefixFlag = false
+    let resPrefix
+
+    // If wanting to change the prefix/category
+    if (resultCourse.prefix) {
+
+
+
+      // Grab the id of the prefix entered
+      // SELECT id FROM category WHERE prefix='CS';
+      const tempCategoryId = await db.query(`SELECT id FROM category WHERE prefix='${resultCourse.prefix}'`);
+
+      // If valid prefix
+      if (typeof tempCategoryId.rows[0] !== 'undefined') {
+        // Update the course category based on the id/prefix given
+        const {
+          text,
+          params
+        } = updateValues({
+          categoryid: tempCategoryId.rows[0].id
+        });
+
+        const n = params.length;
+        const paramList = [];
+        params.forEach(x => {
+          paramList.push(x);
+        });
+
+        paramList.push(id);
+
+        resPrefix = await db.query(`UPDATE "courseCategory" ${text} WHERE courseid = $${n + 1} RETURNING *;`, paramList);
+        // return res.rows[0];
+        if (!(resPrefix.rows.length > 0)) {
+          log.debug(
+            `Problem updating course category with id ${id} in the database with the data ${JSON.stringify(resultCourse)}`
+          );
+          return resPrefix.rows[0];
+        } else {
+          prefixFlag = true
+        }
+      } else {
+        throw HttpError(404, 'Class prefix not found');
+      }
+      // If not, throw error
+      // throw HttpError(500, 'Unexpected DB condition relating to category, update successful with no returned record');
+    }
+
+    // Then update the rest (name, section, credits)
     // UPDATE "course" SET name = 'updated', "section" = 5, credits = 5 WHERE id = 1 RETURNING *
-    const {
-      text,
-      params
-    } = updateValues({
-      name: resultCourse.name,
-      section: resultCourse.section,
-      credits: resultCourse.credits
-    });
 
-    const n = params.length;
-    const paramList = [];
-    params.forEach(x => {
-      paramList.push(x);
-    });
+    // Check if any are null, if all are null then you should skip this part and only submit the prefix IF a prefix was submitted (prefix flag)
+    if (!(resultCourse.name == null) || !(resultCourse.name == null) || !(resultCourse.name == null)) {
 
-    paramList.push(id);
+      const newCourseJSON = {}
 
-    const res = await db.query(`UPDATE "course" ${text} WHERE id = $${n + 1} RETURNING *;`, paramList);
+      if (!(resultCourse.name == null))
+        newCourseJSON.name = resultCourse.name
 
-    // Return values if successful
-    if (res.rows.length > 0) {
-      log.debug(
-        `Successfully updated course with id ${id} in the database with the data ${JSON.stringify(resultCourse)}`
-      );
-      return res.rows[0];
-    } // If not, throw error
-    throw HttpError(500, 'Unexpected DB condition, update successful with no returned record');
+      if (!(resultCourse.section == null))
+        newCourseJSON.section = resultCourse.section
+
+      if (!(resultCourse.credits == null))
+        newCourseJSON.credits = resultCourse.credits
+
+      const {
+        text,
+        params
+      } = updateValues(newCourseJSON);
+
+      const n = params.length;
+      const paramList = [];
+      params.forEach(x => {
+        paramList.push(x);
+      });
+
+      paramList.push(id);
+
+      const res = await db.query(`UPDATE "course" ${text} WHERE id = $${n + 1} RETURNING *;`, paramList);
+
+      // Return values if successful
+      if (res.rows.length > 0) {
+        log.debug(
+          `Successfully updated course with id ${id} in the database with the data ${JSON.stringify(resultCourse)}`
+        );
+        return res.rows[0];
+      } // If not, throw error
+      throw HttpError(500, 'Unexpected DB condition, update successful with no returned record');
+
+    }
+    // else {
+    //   throw HttpError(400, 'thingy thing');
+
+    // If a prefix flag was submitted but nothing else
+    if (prefixFlag) {
+      return resPrefix.rows[0];
+    }
 
   } else { // If missing parameters, throw error
     throw HttpError(400, 'Id and a course attribute required');
