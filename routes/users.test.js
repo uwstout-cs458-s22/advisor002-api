@@ -2,7 +2,6 @@ const log = require('loglevel');
 const request = require('supertest');
 const app = require('../app')();
 const User = require('../models/User');
-const Auth = require('../services/auth');
 
 beforeAll(() => {
   log.disableAll();

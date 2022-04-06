@@ -350,7 +350,6 @@ describe('User Model', () => {
 
     test('user id or email not found', async () => {
       const data = dataForDeleteUser(1);
-      const row = data[0];
       await expect(User.deleteUser()).rejects.toThrowError('UserId is required.');
     });
 
