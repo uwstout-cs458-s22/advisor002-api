@@ -2,6 +2,7 @@ const log = require('loglevel');
 const request = require('supertest');
 const app = require('../app')();
 const User = require('../models/User');
+const Auth = require('../services/auth');
 
 beforeAll(() => {
   log.disableAll();
@@ -31,6 +32,15 @@ jest.mock('../services/auth', () => {
     authorizeSession: jest.fn().mockImplementation((req, res, next) => {
       res.locals.userId = 'user-test-thingy';
       return next();
+    }),
+    checkPermissions: jest.fn().mockImplementation(role => {
+      if(role === 'user'){
+        return 0;
+      } else if (role === 'director') {
+        return 1;
+      } else if (role === 'admin') {
+        return 2;
+      }
     })
   };
 });
@@ -639,15 +649,15 @@ test('Program should respond with code 200 if user is not admin or themself', as
   email: `emailmine@uwstout.edu`,
   userId: `user-test-someguid`,
   enable: 'false',
-  role: 'admin'}).mockResolvedValueOnce({id: 5457846,
+  role: 'user'}).mockResolvedValueOnce({id: 5457846,
   email: `emailanotheremail@uwstout.edu`,
   userId: `user-test-someguid14237`,
   enable: 'false',
-  role: 'user'})
+  role: 'admin'})
 
   User.deleteUser.mockResolvedValueOnce(`Successfully deleted user from db`);
 
-  const response = await request(app).delete('/users').send({userId: 12345, email: "emailmine@uwstout.edu"});
+  const response = await request(app).delete('/users/12345').send();
   expect(response.statusCode).toBe(200);
 });
 

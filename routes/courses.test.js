@@ -57,6 +57,15 @@ jest.mock('../services/auth', () => {
       res.locals.userId = 'user-test-thingy';
       return next();
     }),
+    checkPermissions: jest.fn().mockImplementation(role => {
+      if(role === 'user'){
+        return 0;
+      } else if (role === 'director') {
+        return 1;
+      } else if (role === 'admin') {
+        return 2;
+      }
+    })
   };
 });
 

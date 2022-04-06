@@ -42,6 +42,8 @@ function checkPermissions(role) {
     return Permissions.DIRECTOR;
   } else if(role === 'admin') {
     return Permissions.ADMIN;
+  } else {
+    return Permissions.USER;
   }
 }
 

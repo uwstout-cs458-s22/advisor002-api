@@ -351,8 +351,7 @@ describe('User Model', () => {
     test('user id or email not found', async () => {
       const data = dataForDeleteUser(1);
       const row = data[0];
-      db.query.mockResolvedValue({ rows: data });
-      await expect(User.deleteUser(row.id)).rejects.toThrowError('UserId and Email are required.');
+      await expect(User.deleteUser()).rejects.toThrowError('UserId is required.');
     });
 
     test('user deletes themself but no response returned', async () => {
