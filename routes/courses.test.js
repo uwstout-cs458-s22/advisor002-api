@@ -1,7 +1,7 @@
 const log = require('loglevel');
 const request = require('supertest');
 const app = require('../app')();
-const User = require('../models/User');
+// const User = require('../models/User');
 const Course = require('../models/Course');
 
 beforeAll(() => {
@@ -28,13 +28,13 @@ jest.mock('../models/Course.js', () => {
     };
   });
 
-  jest.mock('../models/User.js', () => {
+  jest.mock('../models/Course.js', () => {
     return {
       findOne: jest.fn(),
       findAll: jest.fn(),
       create: jest.fn(),
-      deleteUser: jest.fn(),
-      update: jest.fn()
+      remove: jest.fn(),
+      // update: jest.fn()
     };
   });
   
@@ -77,9 +77,9 @@ jest.mock('../models/Course.js', () => {
           Course.findAllCourses.mockResolvedValueOnce(data);
           await request(app).get('/courses');
           expect(Course.findAllCourses.mock.calls[0]).toHaveLength(4);
-          
         });
+      });
 
 
-}
+});
   
