@@ -30,7 +30,7 @@ function dataForGetCourse(rows, offset = 0) {
     const value = i + offset;
     data.push({
       id: `${value}`,
-      section: value ,
+      section: value,
       name: `Course-${value}`,
       credits: 3
     });
@@ -118,7 +118,7 @@ describe('Course Model', () => {
       const putDoc = {
         name: 'NewCourse',
         credits: 4,
-        courseId: 5
+        section: 5
       };
 
       db.query.mockResolvedValue({
@@ -126,7 +126,7 @@ describe('Course Model', () => {
       });
 
       await Course.editCourse(row.id, putDoc);
-      expect(db.query.mock.calls).toHaveLength(1);
+      expect(db.query.mock.calls).toHaveLength(2);
       expect(db.query.mock.calls[0]).toHaveLength(2);
       expect(db.query.mock.calls[0][0]).toBe(
         `UPDATE "course" SET name = $1, section = $2, credits = $3 WHERE id = $4 RETURNING *;`
@@ -160,17 +160,123 @@ describe('Course Model', () => {
       });
       await expect(Course.editCourse(row.id, putDoc)).rejects.toThrowError('Unexpected DB condition, update successful with no returned record');
     });
+
+    test('Edit a course to have new category prefix', async () => {
+      const data = dataForGetCourse(1);
+      const row = data[0];
+      row.name = "OldCourse"
+      row.credits = 4
+      const putDoc = {
+        name: 'NewCourse',
+        prefix: "CS"
+      };
+
+      db.query.mockResolvedValue({
+        rows: data
+      });
+
+      await Course.editCourse(row.id, putDoc);
+      expect(db.query.mock.calls).toHaveLength(4);
+      expect(db.query.mock.calls[0]).toHaveLength(1);
+      expect(db.query.mock.calls[0][0]).toBe(
+        `SELECT id FROM category WHERE prefix='CS';`
+      );
+      expect(db.query.mock.calls[1]).toHaveLength(2);
+      expect(db.query.mock.calls[1][0]).toBe(
+        `UPDATE "courseCategory" SET categoryid = $1 WHERE courseid = $2 RETURNING *;`
+      );
+      expect(db.query.mock.calls[2]).toHaveLength(2);
+      expect(db.query.mock.calls[2][0]).toBe(
+        `UPDATE "course" SET name = $1 WHERE id = $2 RETURNING *;`
+      );
+      expect(db.query.mock.calls[3]).toHaveLength(1);
+      expect(db.query.mock.calls[3][0]).toBe(
+        `SELECT course.id, course.name, course.credits, course.section, category.prefix FROM course INNER JOIN "courseCategory" ON "courseCategory".courseid = "course".id INNER JOIN "category" ON "category".id = "courseCategory".categoryid WHERE course.id = 1 LIMIT 1;`
+      );
+
+    });
+
+    test('Throw 400 for category prefix not found', async () => {
+      const data = dataForGetCourse(1);
+      const row = data[0];
+      const putDoc = {
+        name: 'NewCourse',
+        prefix: "cs"
+      };
+      db.query.mockResolvedValue({
+        rows: []
+      });
+      await expect(Course.editCourse(row.id, putDoc)).rejects.toThrowError('Invalid category prefix');
+    });
   });
+
+  test('Edit a courses category prefix only', async () => {
+    const data = dataForGetCourse(1);
+    const row = data[0];
+    const putDoc = {
+      prefix: "CS"
+    };
+    db.query.mockResolvedValue({
+      rows: data
+    });
+    await Course.editCourse(row.id, putDoc);
+    expect(db.query.mock.calls).toHaveLength(3);
+    expect(db.query.mock.calls[0]).toHaveLength(1);
+    expect(db.query.mock.calls[0][0]).toBe(
+      `SELECT id FROM category WHERE prefix='CS';`
+    );
+    expect(db.query.mock.calls[1]).toHaveLength(2);
+    expect(db.query.mock.calls[1][0]).toBe(
+      `UPDATE "courseCategory" SET categoryid = $1 WHERE courseid = $2 RETURNING *;`
+    );
+    expect(db.query.mock.calls[2]).toHaveLength(1);
+    expect(db.query.mock.calls[2][0]).toBe(
+      `SELECT course.id, course.name, course.credits, course.section, category.prefix FROM course INNER JOIN "courseCategory" ON "courseCategory".courseid = "course".id INNER JOIN "category" ON "category".id = "courseCategory".categoryid WHERE course.id = 1 LIMIT 1;`
+
+    );
+  });
+
+  test('Throw 400 for no attributes provided', async () => {
+    const data = dataForGetCourse(1);
+    const row = data[0];
+    const putDoc = {};
+    db.query.mockResolvedValue({
+      rows: data
+    });
+    await expect(Course.editCourse(row.id, putDoc)).rejects.toThrowError('Course attributes required');
+  });
+
+  test('Throw 500 for other DB error', async () => {
+    const data = dataForGetCourse(1);
+    const row = data[0];
+    const putDoc = {
+      prefix: "CS"
+    };
+    db.query.mockResolvedValueOnce({
+      rows: data
+    })
+    db.query.mockResolvedValueOnce({
+      rows: []
+    })
+
+    await expect(Course.editCourse(row.id, putDoc)).rejects.toThrowError('Unexpected DB condition');
+  });
+
 }); 
 
- describe('test deleteCourse', () => {
-      test('course delete', async () => {
-        const data = dataForDeleteCourse(1);
-        const row = data[0];
-        db.query.mockResolvedValue({ rows: data });
-        expect(await Course.deleteCourse(row.section)).toBe(`Successfully deleted course from db`);
-      });
-  
+
+
+
+describe('test deleteCourse', () => {
+  test('course delete', async () => {
+    const data = dataForDeleteCourse(1);
+    const row = data[0];
+    db.query.mockResolvedValue({
+      rows: data
+    });
+    expect(await Course.deleteCourse(row.section)).toBe(`Successfully deleted course from db`);
+  });
+
   test('No parameters', async () => {
     db.query.mockResolvedValue({
       rows: []
@@ -189,8 +295,8 @@ describe('Course Model', () => {
 });
 
 describe('querying all courses', () => {
-  
-   beforeEach(() => {
+
+  beforeEach(() => {
     db.query.mockReset();
     db.query.mockResolvedValue(null);
   });
@@ -281,3 +387,4 @@ describe('querying all courses', () => {
         await expect(Course.findAll()).rejects.toThrowError('a testing database error');
       });
  });
+

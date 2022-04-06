@@ -106,34 +106,103 @@ async function findAll(criteria, limit = 100, offset = 0) {
 async function editCourse(id, resultCourse) {
   if (id && resultCourse) {
 
-    // UPDATE "course" SET name = 'updated', "section" = 5, credits = 5 WHERE id = 1 RETURNING *
-    const {
-      text,
-      params
-    } = updateValues({
-      name: resultCourse.name,
-      section: resultCourse.section,
-      credits: resultCourse.credits
-    });
+    // See if a prefix was changed
+    let prefixFlag = false
 
-    const n = params.length;
-    const paramList = [];
-    params.forEach(x => {
-      paramList.push(x);
-    });
+    // If wanting to change the prefix/category
+    if (resultCourse.prefix) {
 
-    paramList.push(id);
+      // Grab the id of the prefix entered
+      const tempCategoryId = await db.query(`SELECT id FROM category WHERE prefix='${resultCourse.prefix}';`);
 
-    const res = await db.query(`UPDATE "course" ${text} WHERE id = $${n + 1} RETURNING *;`, paramList);
+      // If valid prefix
+      if (typeof tempCategoryId.rows[0] !== 'undefined') {
+        // Update the course category based on the id/prefix given
+        const {
+          text,
+          params
+        } = updateValues({
+          categoryid: tempCategoryId.rows[0].id
+        });
 
-    // Return values if successful
-    if (res.rows.length > 0) {
-      log.debug(
-        `Successfully updated course with id ${id} in the database with the data ${JSON.stringify(resultCourse)}`
-      );
+        const n = params.length;
+        const paramList = [];
+        params.forEach(x => {
+          paramList.push(x);
+        });
+        paramList.push(id);
+
+        const resPrefix = await db.query(`UPDATE "courseCategory" ${text} WHERE courseid = $${n + 1} RETURNING *;`, paramList);
+
+        if (!(resPrefix.rows.length > 0)) {
+          log.debug(
+            `Problem updating course category with id ${id} in the database with the data ${JSON.stringify(resultCourse)}`
+          );
+          throw HttpError(500, 'Unexpected DB condition'); // New
+        } else {
+          prefixFlag = true
+        }
+      } else {
+        throw HttpError(400, 'Invalid category prefix');
+      }
+    }
+
+    // THEN update the rest (name, section, credits)
+    // Check if any are null, if all are null then you should skip this part and only submit the prefix IF a prefix was submitted (prefix flag)
+    if (!(resultCourse.name == null) || !(resultCourse.section == null) || !(resultCourse.credits == null)) {
+
+      const newCourseJSON = {}
+
+      if (!(resultCourse.name == null))
+        newCourseJSON.name = resultCourse.name
+
+      if (!(resultCourse.section == null))
+        newCourseJSON.section = resultCourse.section
+
+      if (!(resultCourse.credits == null))
+        newCourseJSON.credits = resultCourse.credits
+
+      const {
+        text,
+        params
+      } = updateValues(newCourseJSON);
+
+      const n = params.length;
+      const paramList = [];
+      params.forEach(x => {
+        paramList.push(x);
+      });
+
+      paramList.push(id);
+
+      const res = await db.query(`UPDATE "course" ${text} WHERE id = $${n + 1} RETURNING *;`, paramList);
+
+      // Return values if successful
+      if (res.rows.length > 0) {
+        log.debug(
+          `Successfully updated course with id ${id} in the database with the data ${JSON.stringify(resultCourse)}`
+        );
+        // Return all course info AND category prefix
+        const result = await db.query(`SELECT course.id, course.name, course.credits, course.section, category.prefix FROM course ` +
+          `INNER JOIN "courseCategory" ON "courseCategory".courseid = "course".id ` +
+          `INNER JOIN "category" ON "category".id = "courseCategory".categoryid WHERE course.id = ${id} LIMIT 1;`);
+        return result.rows[0];
+      } // If not, throw error
+      throw HttpError(500, 'Unexpected DB condition, update successful with no returned record');
+
+    }
+
+    // If a prefix (flag) was submitted but nothing else
+    if (prefixFlag) {
+      // Return all data about course (we already sent the category in)
+      const res = await db.query(`SELECT course.id, course.name, course.credits, course.section, category.prefix FROM course ` +
+        `INNER JOIN "courseCategory" ON "courseCategory".courseid = "course".id ` +
+        `INNER JOIN "category" ON "category".id = "courseCategory".categoryid WHERE course.id = ${id} LIMIT 1;`);
       return res.rows[0];
-    } // If not, throw error
-    throw HttpError(500, 'Unexpected DB condition, update successful with no returned record');
+
+    } else {
+      throw HttpError(400, 'Course attributes required');
+    }
 
   } else { // If missing parameters, throw error
     throw HttpError(400, 'Id and a course attribute required');
