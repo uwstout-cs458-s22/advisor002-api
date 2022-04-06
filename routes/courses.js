@@ -1,7 +1,7 @@
 const express = require('express');
 const log = require('loglevel');
 const HttpError = require('http-errors');
-const { authorizeSession } = require('./../services/auth');
+const { authorizeSession, checkPermissions } = require('./../services/auth');
 const Course = require('./../models/Course');
 const User = require('./../models/User');
 const { isEmpty } = require('./../services/utils');
@@ -63,7 +63,7 @@ module.exports = () => {
         throw new HttpError.NotFound();
       } else {
         // Check the user's role for permission (must be role 'director')
-        if (sender.role === 'director' || sender.role === 'admin') {
+        if (checkPermissions(sender.role) >= 1) {
           const newCourseJSON = {
             name: req.body.name,
             section: req.body.section,

@@ -7,6 +7,12 @@ const {
   isString
 } = require('./utils');
 
+const Permissions = {
+  USER: 0,
+  DIRECTOR: 1,
+  ADMIN: 2
+};
+
 async function authorizeSession(req, res, next) {
   const authHeader = req.headers.authorization;
   if (isString(authHeader) && authHeader.startsWith('Bearer ') && authHeader.length > 7) {
@@ -29,7 +35,18 @@ async function authorizeSession(req, res, next) {
   }
 }
 
+function checkPermissions(role) {
+  if(role === 'user') {
+    return Permissions.USER;
+  }else if(role === 'director') {
+    return Permissions.DIRECTOR;
+  } else if(role === 'admin') {
+    return Permissions.ADMIN;
+  }
+}
+
 module.exports = {
-  authorizeSession
+  authorizeSession,
+  checkPermissions
 };
 
