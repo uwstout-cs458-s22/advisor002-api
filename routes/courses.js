@@ -63,7 +63,7 @@ module.exports = () => {
         throw new HttpError.NotFound();
       } else {
         // Check the user's role for permission (must be role 'director')
-        if (sender.role === 'director') {
+        if (sender.role === 'director' || sender.role === 'admin') {
           const newCourseJSON = {
             name: req.body.name,
             section: req.body.section,
