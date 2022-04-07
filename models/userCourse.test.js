@@ -1,9 +1,14 @@
 const log = require('loglevel');
+const { db } = require('../services/database');
+// const env = require('../services/environment');
+const userCourse = require('./userCourse');
+
+/*
 const request = require('supertest');
 const app = require('../app')();
 const userCourse = require('../models/userCourse');
 // const Course = require('../models/Course');
-
+*/
 beforeAll(() => {
   log.disableAll();
 });

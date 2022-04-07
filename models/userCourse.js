@@ -3,7 +3,7 @@ const log = require('loglevel');
 const { db } = require('../services/database');
 // eslint-disable-next-line no-unused-vars -- TEMP FOR ESLINT
 const { whereParams, insertValues, updateValues } = require('../services/sqltools');
-// const env = require('../services/environment');
+// const env = require('../services/environment'); 
 
 
 async function findAllCourses(criteria, query = null, limit = 100, offset = 0){ 
