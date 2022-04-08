@@ -5,6 +5,7 @@ const {
   getMockReq,
   getMockRes
 } = require('@jest-mock/express');
+const { describe } = require('eslint/lib/rule-tester/rule-tester');
 
 beforeAll(() => {
   log.disableAll();
@@ -102,5 +103,23 @@ describe('auth tests', () => {
     expect(stytchwrapper.authenticateStytchSession.mock.calls).toHaveLength(1);
     expect(next).toBeCalled();
     expect(next.mock.calls[0]).toHaveLength(0); // no parameters means its a non-error call to the next middleware
+  });
+});
+
+describe('Check permissions tests', () => {
+  test('Role of user should return 0', () => {
+    expect(auth.checkPermissions('user')).toBe(0);
+  });
+
+  test('Role of director should return 1', () => {
+    expect(auth.checkPermissions('director')).toBe(1);
+  });
+
+  test('Role of admin should return 2', () => {
+    expect(auth.checkPermissions('admin')).toBe(2);
+  });
+
+  test('Role of anything else should return 0', () => {
+    expect(auth.checkPermissions('hacker')).toBe(0);
   });
 });
