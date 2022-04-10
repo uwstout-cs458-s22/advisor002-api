@@ -86,9 +86,9 @@ async function findAll(criteria, limit = 100, offset = 0) {
   const n = params.length;
   const p = params.concat([limit, offset])
   // Setup query and add variables for prepared statement and send it
-  const res = await db.query(`SELECT * from "course" AS c ` +
-                                `JOIN "courseSemester" AS cs ON cs.courseId = c.id ` +
-                                `JOIN "semester" AS s ON s.id = cs.semesterId ` +
+  const res = await db.query(`SELECT c.*, s.type, s.year from "course" AS c ` +
+                                `LEFT JOIN "courseSemester" AS cs ON cs.courseId = c.id ` +
+                                `LEFT JOIN "semester" AS s ON s.id = cs.semesterId ` +
                               `${text} LIMIT $${n + 1} OFFSET $${n + 2};`, p);
   log.debug(
     `Retrieved ${res.rows.length} courses from db with criteria ${text}, ${JSON.stringify(params)}`
