@@ -61,9 +61,9 @@ async function findOne(criteria) {
   // Use the course whereParams function to setup a prepared statement
   const { text, params } = whereParamsCourses(criteria);
   // Setup prepared statement to send to server with the variables
-  const res = await db.query(`SELECT * from "course" AS c ` +
-                                `JOIN "courseSemester" AS cs ON cs.courseId = c.id ` +
-                                `JOIN "semester" AS s ON s.id = cs.semesterId ` +
+  const res = await db.query(`SELECT c.*, s.type, s.year from "course" AS c ` +
+                                `LEFT JOIN "courseSemester" AS cs ON cs.courseId = c.id ` +
+                                `LEFT JOIN "semester" AS s ON s.id = cs.semesterId ` +
                               `${text};`, params);
 
   // If the result count is more than 0 than return the results gathered from the database

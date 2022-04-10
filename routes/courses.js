@@ -87,7 +87,7 @@ module.exports = () => {
     }
   });
 
-  router.get('/', authorizeSession, async (req, res, next) => {
+  router.get('/', async (req, res, next) => {
     try {
       const criteria = {};
 
@@ -129,7 +129,7 @@ module.exports = () => {
   router.get('/:courseid', authorizeSession, async (req, res, next) => {
     try {
       const courseid = req.params.courseid;
-      const courses = await Course.findOne({id: courseid});
+      const courses = await Course.findAll({id: courseid});
       if(isEmpty(courses)) {
         throw new HttpError.NotFound();
       }
