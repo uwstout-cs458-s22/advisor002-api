@@ -87,7 +87,7 @@ module.exports = () => {
     }
   });
 
-  router.get('/', async (req, res, next) => {
+  router.get('/', authorizeSession, async (req, res, next) => {
     try {
       const criteria = {};
 
