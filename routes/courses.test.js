@@ -7,16 +7,16 @@ const User = require('../models/User');
 beforeAll(() => {
   log.disableAll();
 });
-// use for creating course 
+// use for creating course
 function dataForGetCourses(rows, offset = 0) {
   const data = [];
   for (let i = 1; i <= rows; i++) {
     const value = i + offset;
     data.push({
       id: `${value}`,
-      section: value ,
+      section: value,
       name: `Course-${value}`,
-      credits: 3
+      credits: 3,
     });
   }
   return data;
@@ -28,7 +28,8 @@ jest.mock('../models/Course.js', () => {
     createCourse: jest.fn(),
     findAll: jest.fn(),
     editCourse: jest.fn(),
-    deleteCourse: jest.fn()
+    deleteCourse: jest.fn(),
+    findCoursesInCategory: jest.fn(),
   };
 });
 
@@ -38,7 +39,7 @@ jest.mock('../models/User.js', () => {
     findAll: jest.fn(),
     create: jest.fn(),
     deleteUser: jest.fn(),
-    update: jest.fn()
+    update: jest.fn(),
   };
 });
 
@@ -47,7 +48,7 @@ jest.mock('../services/environment', () => {
     port: 3001,
     stytchProjectId: 'project-test-11111111-1111-1111-1111-111111111111',
     stytchSecret: 'secret-test-111111111111',
-    masterAdminEmail: 'master@gmail.com'
+    masterAdminEmail: 'master@gmail.com',
   };
 });
 
@@ -57,19 +58,17 @@ jest.mock('../services/auth', () => {
       res.locals.userId = 'user-test-thingy';
       return next();
     }),
-    checkPermissions: jest.fn().mockImplementation(role => {
-      if(role === 'user'){
+    checkPermissions: jest.fn().mockImplementation((role) => {
+      if (role === 'user') {
         return 0;
       } else if (role === 'director') {
         return 1;
       } else if (role === 'admin') {
         return 2;
       }
-    })
+    }),
   };
 });
-
-
 
 // a helper that creates an array structure for getCourseById
 function dataForGetCourse(rows, offset = 0) {
@@ -80,13 +79,11 @@ function dataForGetCourse(rows, offset = 0) {
       id: `${value}`,
       name: 'courseTest',
       section: `${value}`,
-      credits: `${value}`
+      credits: `${value}`,
     });
   }
   return data;
 }
-
-
 
 describe('DELETE /courses', () => {
   beforeEach(() => {
@@ -96,86 +93,101 @@ describe('DELETE /courses', () => {
     User.findOne.mockResolvedValue(null);
   });
 
-  test('Parameters missing', async () =>  {
+  test('Parameters missing', async () => {
     const response = await request(app).delete('/courses').send({});
     expect(response.statusCode).toBe(400);
   });
 
-  test('Cannot find locals.userId', async () =>  {
-    Course.findOne.mockResolvedValueOnce({id: `145`,
-    section: `505`,
+  test('Cannot find locals.userId', async () => {
+    Course.findOne.mockResolvedValueOnce({
+      id: `145`,
+      section: `505`,
       name: `course name`,
-      credits: 3})
+      credits: 3,
+    });
 
-    const response = await request(app).delete('/courses').send({ id: "145"});
+    const response = await request(app).delete('/courses').send({ id: '145' });
     expect(response.statusCode).toBe(403);
   });
 
-  test('User should not be allowed to delete course', async () =>  {
-    Course.findOne.mockResolvedValueOnce({id: `145`,
+  test('User should not be allowed to delete course', async () => {
+    Course.findOne.mockResolvedValueOnce({
+      id: `145`,
       section: `505`,
       name: `course name`,
-      credits: 3})
-    User.findOne.mockResolvedValueOnce({id: 12345,
+      credits: 3,
+    });
+    User.findOne.mockResolvedValueOnce({
+      id: 12345,
       email: `emailmine@uwstout.edu`,
       userId: `user-test-someguid`,
       enable: 'false',
-      role: 'user'})
+      role: 'user',
+    });
 
-    const response = await request(app).delete('/courses').send({ id: "145"});
+    const response = await request(app).delete('/courses').send({ id: '145' });
     expect(response.statusCode).toBe(403);
   });
 
-  test('Admin should not be allowed to delete course', async () =>  {
-    Course.findOne.mockResolvedValueOnce({id: `145`,
+  test('Admin should not be allowed to delete course', async () => {
+    Course.findOne.mockResolvedValueOnce({
+      id: `145`,
       section: `505`,
       name: `course name`,
-      credits: 3})
+      credits: 3,
+    });
 
-    User.findOne.mockResolvedValueOnce({id: 12345,
+    User.findOne.mockResolvedValueOnce({
+      id: 12345,
       email: `emailmine@uwstout.edu`,
       userId: `user-test-someguid`,
       enable: 'false',
-      role: 'admin'})
+      role: 'admin',
+    });
 
-    const response = await request(app).delete('/courses').send({ id: "145"});
+    const response = await request(app).delete('/courses').send({ id: '145' });
     expect(response.statusCode).toBe(403);
   });
 
-  test('Director should be allowed to delete course', async () =>  {
-    Course.findOne.mockResolvedValueOnce({id: `145`,
+  test('Director should be allowed to delete course', async () => {
+    Course.findOne.mockResolvedValueOnce({
+      id: `145`,
       section: `505`,
       name: `course name`,
-      credits: 3})
+      credits: 3,
+    });
 
-    User.findOne.mockResolvedValueOnce({id: 12345,
+    User.findOne.mockResolvedValueOnce({
+      id: 12345,
       email: `emailmine@uwstout.edu`,
       userId: `user-test-someguid`,
       enable: 'false',
-      role: 'director'})
+      role: 'director',
+    });
 
     Course.deleteCourse.mockResolvedValueOnce(`Successfully deleted course from db`);
 
-    const response = await request(app).delete('/courses').send({ id: "145"});
+    const response = await request(app).delete('/courses').send({ id: '145' });
     expect(response.statusCode).toBe(200);
   });
 
-  test('Course should not be empty', async () =>  {
-    Course.findOne.mockResolvedValueOnce({})
+  test('Course should not be empty', async () => {
+    Course.findOne.mockResolvedValueOnce({});
 
-    User.findOne.mockResolvedValueOnce({id: 12345,
+    User.findOne.mockResolvedValueOnce({
+      id: 12345,
       email: `emailmine@uwstout.edu`,
       userId: `user-test-someguid`,
       enable: 'false',
-      role: 'director'})
+      role: 'director',
+    });
 
-    const response = await request(app).delete('/courses').send({ id: "145"});
+    const response = await request(app).delete('/courses').send({ id: '145' });
     expect(response.statusCode).toBe(404);
   });
 });
 
-
-  // Skipping all tests for create
+// Skipping all tests for create
 
 describe('PUT /courses', () => {
   beforeEach(() => {
@@ -189,39 +201,38 @@ describe('PUT /courses', () => {
 
   describe('Given id', () => {
     test('Testing calling Course.findOne and Course.editCourse', async () => {
-
       const data = dataForGetCourse(1);
       const row = data[0];
 
       const newCourseParams = {
         name: 'TestClass',
         section: 5,
-        credits: 4
+        credits: 4,
       };
 
       const resultCourseParams = {
         id: row.id,
         name: 'TestClass',
         section: 5,
-        credits: 4
+        credits: 4,
       };
 
       Course.findOne.mockResolvedValueOnce({
         id: row.id,
         name: row.name,
         section: row.section,
-        credits: row.credits
-      })
+        credits: row.credits,
+      });
       User.findOne.mockResolvedValueOnce({
         id: 456,
         email: 'fake@aol.com',
         role: 'director',
         enable: true,
-        userId: 'userId'
-      })
+        userId: 'userId',
+      });
 
       Course.editCourse.mockResolvedValueOnce({
-        resultCourseParams
+        resultCourseParams,
       });
 
       const response = await request(app).put(`/courses/${row.id}`).send(newCourseParams);
@@ -235,37 +246,35 @@ describe('PUT /courses', () => {
       const newCourseParams = {
         name: 'TestClass',
         section: 5,
-        credits: 4
+        credits: 4,
       };
 
       const resultCourseParams = {
         id: row.id,
         name: 'TestClass',
         section: 5,
-        credits: 4
+        credits: 4,
       };
 
       Course.findOne.mockResolvedValueOnce({
         id: row.id,
         name: row.name,
         section: row.section,
-        credits: row.credits
-      })
+        credits: row.credits,
+      });
       User.findOne.mockResolvedValueOnce({
         id: 456,
         email: 'fake@aol.com',
         role: 'director',
         enable: true,
-        userId: 'userId'
-      })
-
-      Course.editCourse.mockResolvedValueOnce({
-        resultCourseParams
+        userId: 'userId',
       });
 
-      const {
-        body: course
-      } = await request(app).put(`/courses/${row.id}`).send(newCourseParams);
+      Course.editCourse.mockResolvedValueOnce({
+        resultCourseParams,
+      });
+
+      const { body: course } = await request(app).put(`/courses/${row.id}`).send(newCourseParams);
       expect(course.id).toBe(newCourseParams.id);
     });
 
@@ -274,18 +283,18 @@ describe('PUT /courses', () => {
       const row = data[0];
       const requestParams = {
         email: 'Dummy@Data.com',
-        name: 'DummyCourseData'
+        name: 'DummyCourseData',
       };
       Course.findOne.mockResolvedValueOnce({
-        row: row
+        row: row,
       });
       User.findOne.mockResolvedValueOnce({
         id: 456,
         email: 'fake@aol.com',
         role: 'director',
         enable: true,
-        userId: 'userId'
-      })
+        userId: 'userId',
+      });
       Course.editCourse.mockRejectedValueOnce(new Error('Database error'));
       const response = await request(app).put(`/courses/${row.id}`).send(requestParams);
       expect(response.statusCode).toBe(500);
@@ -301,11 +310,11 @@ describe('PUT /courses', () => {
         email: 'fake@aol.com',
         role: 'director',
         enable: true,
-        userId: 'userId'
-      })
+        userId: 'userId',
+      });
 
       const response = await request(app).put(`/courses/${row.id}`).send({
-        course: row
+        course: row,
       });
       expect(response.statusCode).toBe(404);
     });
@@ -314,10 +323,10 @@ describe('PUT /courses', () => {
       const data = dataForGetCourse(1);
       const row = data[0];
       Course.findOne.mockResolvedValueOnce({
-        row: row
+        row: row,
       });
 
-      const response = await request(app).put(`/courses/${row.id}`).send({})
+      const response = await request(app).put(`/courses/${row.id}`).send({});
 
       expect(response.statusCode).toBe(400);
     });
@@ -329,24 +338,24 @@ describe('PUT /courses', () => {
       const newCourseParams = {
         section: 'TestClass546',
         name: 'TestClass',
-        credits: 4
+        credits: 4,
       };
 
       Course.findOne.mockResolvedValueOnce({
         section: 'TestClass123',
         name: 'TestClass',
-        credits: 3
-      })
+        credits: 3,
+      });
       User.findOne.mockResolvedValueOnce({
         id: 456,
         email: 'fake@aol.com',
         role: 'user',
         enable: true,
-        userId: 'userId'
-      })
+        userId: 'userId',
+      });
 
       const response = await request(app).put(`/courses/${row.id}`).send({
-        course: newCourseParams
+        course: newCourseParams,
       });
       expect(response.statusCode).toBe(403);
     });
@@ -361,14 +370,16 @@ describe('POST /courses', () => {
     User.findOne.mockResolvedValue(null);
   });
 
-  test('should return 400 errror when create course parameters missing', async () =>  {
-    User.findOne.mockResolvedValueOnce({id: 12345,
+  test('should return 400 errror when create course parameters missing', async () => {
+    User.findOne.mockResolvedValueOnce({
+      id: 12345,
       email: `emailmine@uwstout.edu`,
       userId: `user-test-someguid`,
       enable: 'false',
-      role: 'user'});
+      role: 'user',
+    });
 
-    const fakeCourse = {name: 'operating systems', credits: 4, section: 2};
+    const fakeCourse = { name: 'operating systems', credits: 4, section: 2 };
     Course.findOne.mockResolvedValueOnce(fakeCourse);
 
     const response = await request(app).post('/courses').send([{}]);
@@ -376,49 +387,68 @@ describe('POST /courses', () => {
     expect(response.statusCode).toBe(400);
   });
 
-  test('User should not be allowed to create course', async () =>  {
-    User.findOne.mockResolvedValueOnce({id: 12345,
+  test('User should not be allowed to create course', async () => {
+    User.findOne.mockResolvedValueOnce({
+      id: 12345,
       email: `emailmine@uwstout.edu`,
       userId: `user-test-someguid`,
       enable: 'false',
-      role: 'user'})
+      role: 'user',
+    });
 
-    const response = await request(app).post('/courses').send([{
-      section: 505,
-      name: `course name`,
-      credits: 3}]);
+    const response = await request(app)
+      .post('/courses')
+      .send([
+        {
+          section: 505,
+          name: `course name`,
+          credits: 3,
+        },
+      ]);
     expect(response.statusCode).toBe(403);
   });
 
-  test('Admin should not be allowed to create course', async () =>  {
-
-    User.findOne.mockResolvedValueOnce({id: 12345,
+  test('Admin should not be allowed to create course', async () => {
+    User.findOne.mockResolvedValueOnce({
+      id: 12345,
       email: `emailmine@uwstout.edu`,
       userId: `user-test-someguid`,
       enable: 'false',
-      role: 'admin'})
+      role: 'admin',
+    });
 
-    const response = await request(app).post('/courses').send([{
-      section: 505,
-      name: `course name`,
-      credits: 3}]);
+    const response = await request(app)
+      .post('/courses')
+      .send([
+        {
+          section: 505,
+          name: `course name`,
+          credits: 3,
+        },
+      ]);
     expect(response.statusCode).toBe(403);
   });
 
-  test('Director should be allowed to create course', async () =>  {
-
-    User.findOne.mockResolvedValueOnce({id: 12345,
+  test('Director should be allowed to create course', async () => {
+    User.findOne.mockResolvedValueOnce({
+      id: 12345,
       email: `emailmine@uwstout.edu`,
       userId: `user-test-someguid`,
       enable: 'false',
-      role: 'director'})
+      role: 'director',
+    });
 
     Course.deleteCourse.mockResolvedValueOnce(`Successfully deleted course from db`);
 
-    const response = await request(app).post('/courses').send([{ 
-      section: 505,
-      name: `course name`,
-      credits: 3}]);
+    const response = await request(app)
+      .post('/courses')
+      .send([
+        {
+          section: 505,
+          name: `course name`,
+          credits: 3,
+        },
+      ]);
     expect(response.statusCode).toBe(201);
   });
 });
@@ -428,7 +458,9 @@ describe('Get /courses', () => {
     Course.findOne.mockResolvedValue(null);
     Course.findAll.mockReset();
     Course.findAll.mockResolvedValue(null);
-  })
+    Course.findCoursesInCategory.mockReset();
+    Course.findCoursesInCategory.mockResolvedValue(null);
+  });
   describe('querying a group of courses', () => {
     test('should make a call to Course.findAll', async () => {
       const data = dataForGetCourses(10);
@@ -480,7 +512,7 @@ describe('Get /courses', () => {
       await request(app).get('/courses?credits=3&limit=100&offset=10');
       expect(Course.findAll.mock.calls).toHaveLength(1);
       expect(Course.findAll.mock.calls[0]).toHaveLength(3);
-      expect(Course.findAll.mock.calls[0][0]).toStrictEqual({credits: "3"});
+      expect(Course.findAll.mock.calls[0][0]).toStrictEqual({ credits: '3' });
       expect(Course.findAll.mock.calls[0][1]).toBe('100');
       expect(Course.findAll.mock.calls[0][2]).toBe('10');
     });
@@ -543,7 +575,9 @@ describe('Get /courses', () => {
       Course.findAll.mockResolvedValueOnce(data);
       const response = await request(app).get('/courses?type=f');
       expect(response.statusCode).toBe(400);
-      expect(response.body.error.message).toBe('Type must be one of fall, spring, summer, or winter');
+      expect(response.body.error.message).toBe(
+        'Type must be one of fall, spring, summer, or winter'
+      );
     });
 
     test('should respond with 400 because year is not a valid integer', async () => {
@@ -564,7 +598,7 @@ describe('Get /courses', () => {
         credits: '3',
         name: 'blah',
         type: 'spring',
-        year: '2019'
+        year: '2019',
       });
       expect(Course.findAll.mock.calls[0][1]).toBeUndefined();
       expect(Course.findAll.mock.calls[0][2]).toBeUndefined();

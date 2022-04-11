@@ -91,6 +91,22 @@ module.exports = () => {
     try {
       const criteria = {};
 
+      log.debug(req.query);
+
+      if(req.query.categoryid){
+        try {
+          const categoryid = req.query.categoryid;
+          const coursesFromCategory = await Course.findCoursesInCategory(categoryid);
+          if(isEmpty(coursesFromCategory)){
+            throw new HttpError.NotFound();
+          }
+          log.info(`${req.method} ${req.originalUrl} success: returning courses with category id ${categoryid}`);
+          return res.send(coursesFromCategory);
+        } catch (error) {
+          next(error);
+        }
+      }
+
       if(req.query.credits) {
         if(!parseInt(req.query.credits) && req.query.credits !== '0') {
           throw HttpError(400, 'Credits must be a valid integer');
