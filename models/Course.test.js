@@ -264,9 +264,6 @@ describe('Course Model', () => {
 
 }); 
 
-
-
-
 describe('test deleteCourse', () => {
   test('course delete', async () => {
     const data = dataForDeleteCourse(1);
@@ -388,3 +385,37 @@ describe('querying all courses', () => {
       });
  });
 
+ describe('querying on category id', () => {
+  beforeEach(() => {
+    db.query.mockReset();
+    db.query.mockResolvedValue(null);
+  });
+
+    test('Return {} when nothing is returned from query', async () => {
+        db.query.mockResolvedValue({
+          rows: []
+        });
+        const res = await Course.findCoursesInCategory('1');
+        const emp = {};
+        expect(res).toStrictEqual(emp);
+      });
+
+    test('Return rows when query is returned', async () => {
+        const rows = [{
+          "id": 1,
+          "section": 458,
+          "name": "computer science",
+          "credits": 4,
+          "courseid": 1,
+          "categoryid": 1,
+          "prefix": "CS"
+      }];
+
+      db.query.mockResolvedValue({
+        rows: rows
+      });
+      const res = await Course.findCoursesInCategory('1');
+
+      expect(res).toBe(rows);
+    });
+ });

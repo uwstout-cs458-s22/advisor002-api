@@ -98,6 +98,25 @@ async function findAll(criteria, limit = 100, offset = 0) {
   return res.rows;
 }
 
+// requests are formatted /courses?categoryid=...
+// if found return the results
+// if not found return {}
+async function findCoursesInCategory(categoryid) {
+  // Query for all courses that are in the category with the id given
+  const res = await  db.query(`SELECT * FROM course ` +
+  `INNER JOIN "courseCategory" ON "courseCategory".courseid = "course".id ` +
+  `INNER JOIN "category" ON "category".id = "courseCategory".categoryid WHERE category.id = ${categoryid}`);
+
+  if(res.rows.length > 0){
+    log.debug(`Retrieved ${res.rows.length} courses from db with category id ${categoryid}`);
+    // Return the results
+    return res.rows;
+  } 
+
+  log.debug(`Could not find courses in category with id: ${categoryid}`);
+  return {};
+}
+
 // Edit given course's attributes
 // if successful update record in database, return row modified 'res'
 // if successful, but no row updates/returned, throw error
@@ -209,10 +228,12 @@ async function editCourse(id, resultCourse) {
   }
 }
 
+
 module.exports = {
   createCourse,
   deleteCourse,
   findOne,
   findAll,
+  findCoursesInCategory,
   editCourse
 };
