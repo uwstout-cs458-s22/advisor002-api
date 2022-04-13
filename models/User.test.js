@@ -37,6 +37,21 @@ function dataForGetUser(rows, offset = 0) {
   return data;
 }
 
+function dataForDeleteUser(rows, offset = 0) {
+  const data = [];
+  for (let i = 1; i <= rows; i++) {
+    const value = i + offset;
+    data.push({
+      id: `${value}`,
+      email: `email${value}@uwstout.edu`,
+      userId: `user-test-someguid${value}`,
+      enable: 'true',
+      role: 'admin',
+    });
+  }
+  return data;
+}
+
 describe('User Model', () => {
   beforeEach(() => {
     db.query.mockReset();
@@ -117,7 +132,7 @@ describe('User Model', () => {
     test('should make a call to User.findAll - with criteria, with limits, no offsets', async () => {
       const data = dataForGetUser(3);
       db.query.mockResolvedValue({ rows: data });
-      const users = await User.findAll({ role: 'user', enable: true }, 3);
+      const users = await User.findAll({ role: 'user', enable: true }, null, 3);
       expect(db.query.mock.calls).toHaveLength(1);
       expect(db.query.mock.calls[0]).toHaveLength(2);
       expect(db.query.mock.calls[0][0]).toBe(
@@ -139,7 +154,7 @@ describe('User Model', () => {
     test('should make a call to User.findAll - with criteria, with limits, with offsets', async () => {
       const data = dataForGetUser(3, 1);
       db.query.mockResolvedValue({ rows: data });
-      const users = await User.findAll({ role: 'user', enable: true }, 3, 1);
+      const users = await User.findAll({ role: 'user', enable: true }, null, 3, 1);
       expect(db.query.mock.calls).toHaveLength(1);
       expect(db.query.mock.calls[0]).toHaveLength(2);
       expect(db.query.mock.calls[0][0]).toBe(
@@ -161,6 +176,62 @@ describe('User Model', () => {
     test('should return null for database error', async () => {
       db.query.mockRejectedValueOnce(new Error('a testing database error'));
       await expect(User.findAll()).rejects.toThrowError('a testing database error');
+    });
+  });
+
+  describe('updating a user', () => {
+    test('User.update with role as admin and enabled', async () => {
+      const data = dataForGetUser(1);
+      const row = data[0];
+      row.enable = false;
+      row.role = 'user';
+      const putDoc = {
+        role: 'admin',
+        enable: false
+      };
+
+      db.query.mockResolvedValue({ rows: data });
+      await User.update(row.id, putDoc);
+      expect(db.query.mock.calls).toHaveLength(1);
+      expect(db.query.mock.calls[0]).toHaveLength(2);
+      expect(db.query.mock.calls[0][0]).toBe(
+        'UPDATE "user" SET role = $1, enable = $2 WHERE id = $3 RETURNING *;'
+      );
+      expect(db.query.mock.calls[0][1]).toHaveLength(3);
+      expect(db.query.mock.calls[0][1][0]).toBe(putDoc.role);
+      expect(db.query.mock.calls[0][1][1]).toBe(putDoc.enable);
+    });
+
+    test('User.update with 500 unexpected condition', async () => {
+      const data = dataForGetUser(1);
+      const row = data[0];
+      row.enable = false;
+      row.role = 'user';
+      const putDoc = {
+        role: 'admin',
+        enable: false
+      };
+
+      db.query.mockResolvedValue({ rows: [] });
+      await expect(User.update(row.id, putDoc)).rejects.toThrowError('Unexpected DB condition, update successful with no returned record');
+      expect(db.query.mock.calls).toHaveLength(1);
+      expect(db.query.mock.calls[0]).toHaveLength(2);
+      expect(db.query.mock.calls[0][0]).toBe(
+        'UPDATE "user" SET role = $1, enable = $2 WHERE id = $3 RETURNING *;'
+      );
+      expect(db.query.mock.calls[0][1]).toHaveLength(3);
+      expect(db.query.mock.calls[0][1][0]).toBe(putDoc.role);
+      expect(db.query.mock.calls[0][1][1]).toBe(putDoc.enable);
+    });
+
+    test('User.update with no input into update function', async () => {
+      await expect(User.update()).rejects.toThrowError('Id and a put document are required');
+      expect(db.query.mock.calls).toHaveLength(0);
+    });
+
+    test('User.update with bad input', async () => {
+      await expect(User.update('bad input')).rejects.toThrowError('Id and a put document are required');
+      expect(db.query.mock.calls).toHaveLength(0);
     });
   });
 
@@ -219,7 +290,7 @@ describe('User Model', () => {
       db.query.mockResolvedValue({ rows: [] });
 
       await expect(User.create(row.userId, row.email)).rejects.toThrowError(
-        'Unexpected DB Condition, insert sucessful with no returned record'
+        'Unexpected DB Condition, insert successful with no returned record'
       );
 
       expect(db.query.mock.calls).toHaveLength(1);
@@ -265,6 +336,27 @@ describe('User Model', () => {
     test('User.create with no input', async () => {
       await expect(User.create()).rejects.toThrowError('UserId and Email are required.');
       expect(db.query.mock.calls).toHaveLength(0);
+    });
+  });
+
+  describe('test deleteUser', () => {
+
+    test('user deletes themself', async () => {
+      const data = dataForDeleteUser(1);
+      const row = data[0];
+      db.query.mockResolvedValue({ rows: data });
+      expect(await User.deleteUser(row.id)).toBe(`Successfully deleted user from db`);
+    });
+
+    test('user id or email not found', async () => {
+      await expect(User.deleteUser()).rejects.toThrowError('UserId is required.');
+    });
+
+    test('user deletes themself but no response returned', async () => {
+      const data = dataForDeleteUser(1);
+      const row = data[0];
+      db.query.mockResolvedValue({ rows: []});
+      await expect(User.deleteUser(row.id, row.email)).rejects.toThrowError('Unexpected db condition, delete successful with no returned record');
     });
   });
 });

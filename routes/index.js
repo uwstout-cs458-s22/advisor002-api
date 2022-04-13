@@ -4,10 +4,16 @@ const log = require('loglevel');
 
 module.exports = () => {
   const router = express.Router();
-  router.use(bodyParser.urlencoded({ extended: true }));
+  router.use(
+    bodyParser.urlencoded({
+      extended: true,
+    })
+  );
   router.use(bodyParser.json());
   const usersRoutes = require('./users')();
   router.use('/users', usersRoutes);
+  const coursesRoutes = require('./courses')();
+  router.use('/courses', coursesRoutes);
   router.get('/health', (req, res) => {
     const uptime = process.uptime();
     const data = {

@@ -3,14 +3,28 @@ const log = require('loglevel');
 const HttpError = require('http-errors');
 const { isEmpty } = require('./../services/utils');
 const User = require('./../models/User');
-const { authorizeSession } = require('./../services/auth');
+const { authorizeSession, checkPermissions } = require('./../services/auth');
 
 module.exports = () => {
   const router = express.Router();
 
   router.get('/', authorizeSession, async (req, res, next) => {
     try {
-      const users = await User.findAll(null, req.query.limit, req.query.offset);
+      const criteria = {};
+      const query = req.query.query ? req.query.query : null;
+
+      if(req.query.enable) {
+        criteria.enable = (req.query.enable === 'true');
+      }
+
+      if(req.query.role) {
+        criteria.role = req.query.role;
+      }
+      
+      let users = [];
+
+      users = await User.findAll(criteria, query, req.query.limit, req.query.offset);
+      
       log.info(`${req.method} ${req.originalUrl} success: returning ${users.length} user(s)`);
       return res.send(users);
     } catch (error) {
@@ -46,6 +60,35 @@ module.exports = () => {
     }
   });
 
+  router.put('/:id(\\d+)', authorizeSession, async (req, res, next) => {
+    try {
+      const id = req.params.id;
+      const user = await User.findOne({ id: id });
+
+      if(isEmpty(req.body)) {
+        throw new HttpError.BadRequest('Required parameters are missing');
+      }
+
+      const sender = await User.findOne({ userId: res.locals.userId });
+
+      if(isEmpty(user) || isEmpty(sender)) {
+        throw new HttpError.NotFound();
+      }
+
+      if(checkPermissions(sender.role) < 2) {
+        throw new HttpError.Forbidden('You are not allowed to do this');
+      }
+
+      const updatedUser = await User.update(user.id, req.body);
+
+      res.setHeader('Location', `/users/${user.id}`);
+      return res.send(updatedUser);
+
+    } catch(error) {
+      next(error);
+    }
+  });
+
   router.post('/', authorizeSession, async (req, res, next) => {
     try {
       const userId = req.body.userId;
@@ -66,5 +109,33 @@ module.exports = () => {
     }
   });
 
+  router.delete('/:id(\\d+)', async (req, res, next) => {
+    try {
+      const id = req.params.id;
+      const senderId = res.locals.userId;
+      const user = await User.findOne({ id: id });
+      const sender = await User.findOne({ userId: senderId });
+
+      // check for required parameters
+      if (!id) {
+        throw HttpError(400, 'Required Parameters Missing');
+      }
+      // check that user exists
+      else if (isEmpty(user)) {
+        throw new HttpError.NotFound();
+      } else {
+        if (checkPermissions(sender.role) >= 2 || user.email === sender.email) {
+          await User.deleteUser(id);
+          res.status(200);
+          res.send();
+        } else {
+          res.status(403);
+          res.send({ error: 'You are not authorized to do this' });
+        }
+      }
+    } catch (error) {
+      next(error);
+    }
+  });
   return router;
 };

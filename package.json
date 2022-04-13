@@ -54,7 +54,11 @@
       "services/stytchwrapper.js",
       "services/database.js",
       "services/environment.js",
-      "./server.js"
+      "./server.js",
+      "initDatabase.sql"
+    ],
+    "testPathIgnorePatterns": [
+      "initDatabase.sql"
     ],
     "coverageThreshold": {
       "global": {
