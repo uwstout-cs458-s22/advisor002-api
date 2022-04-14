@@ -12,10 +12,8 @@ module.exports = () => {
   router.use(bodyParser.json());
   const usersRoutes = require('./users')();
   const courseRoutes = require('./courses')();
-  const usercourseRoutes = require('./usercourses')();
   router.use('/users', usersRoutes);
   router.use('/courses', courseRoutes);
-  router.use('/usercourses', usercourseRoutes);
   router.get('/health', (req, res) => {
     const uptime = process.uptime();
     const data = {

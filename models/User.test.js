@@ -52,6 +52,26 @@ function dataForDeleteUser(rows, offset = 0) {
   return data;
 }
 
+function dataForGetSemesterSchedule(rows, offset = 0) {
+  const data = [];
+  for (let i = 1; i <= rows; i++) {
+    const value = i + offset;
+    data.push({
+      id: value,
+      section: value,
+      name: `test course ${value}`,
+      credits: value,
+      semesterid: value,
+      courseid: value,
+      year: 2022,
+      type: 'fall',
+      userid: value,
+      taken: false,
+    });
+  }
+  return data;
+}
+
 describe('User Model', () => {
   beforeEach(() => {
     db.query.mockReset();
@@ -179,6 +199,60 @@ describe('User Model', () => {
     });
   });
 
+  describe('find a schedule for each semester', () => {
+    test('should make a call to User.getSemesterSchedule', async () => {
+      const row = dataForGetSemesterSchedule(1)[0];
+      db.query.mockResolvedValue({ rows: [row] });
+      const courses = await User.getSemesterSchedule(
+        row.userid,
+        row.semesterid,
+        row.year,
+        row.type
+      );
+      expect(db.query.mock.calls).toHaveLength(1);
+      expect(db.query.mock.calls[0][1][0]).toBe(1);
+      expect(db.query.mock.calls[0][1][1]).toBe(1);
+      expect(db.query.mock.calls[0][1][2]).toBe(2022);
+      expect(db.query.mock.calls[0][1][3]).toBe('fall');
+      expect(db.query.mock.calls[0][0]).toBe(
+        `SELECT * FROM "course" as c JOIN "courseSemester" as cs on cs.courseid = c.id JOIN "semester" as s ON s.id = cs.semesterid JOIN "userCourse" as uc ON uc.courseid = c.id WHERE userid=$1 AND s.id=$2 AND year=$3 AND type=$4;`
+      );
+      for (const key in Object.keys(row)) {
+        expect(courses).toHaveProperty(key, row[key]);
+      }
+    });
+
+    test('Throw 500 error for other errors', async () => {
+      const data = dataForGetSemesterSchedule(1);
+      const row = data[0];
+      row.userid = 1;
+      row.semesterid = 2;
+      row.year = 2022;
+      row.type = 'fall';
+      const putDoc = {
+        name: 'NewSchedule',
+        userid: 1,
+        semesterid: 2,
+        year: 2023,
+        type: 'spring',
+      };
+
+      db.query.mockResolvedValue({
+        rows: [],
+      });
+      await expect(User.getSemesterSchedule(putDoc.userid, putDoc.semesterid, putDoc.year, putDoc.type)).rejects.toThrowError(
+        'Unexpected DB condition,  select successful with no returned record'
+      );
+    });
+
+    test('should return null for database error', async () => {
+      db.query.mockRejectedValueOnce(new Error('a testing database error'));
+      await expect(User.getSemesterSchedule()).rejects.toThrowError(
+        'userid, semester, year, and type required'
+      );
+    });
+  });
+
   describe('updating a user', () => {
     test('User.update with role as admin and enabled', async () => {
       const data = dataForGetUser(1);
@@ -187,7 +261,7 @@ describe('User Model', () => {
       row.role = 'user';
       const putDoc = {
         role: 'admin',
-        enable: false
+        enable: false,
       };
 
       db.query.mockResolvedValue({ rows: data });
@@ -209,11 +283,13 @@ describe('User Model', () => {
       row.role = 'user';
       const putDoc = {
         role: 'admin',
-        enable: false
+        enable: false,
       };
 
       db.query.mockResolvedValue({ rows: [] });
-      await expect(User.update(row.id, putDoc)).rejects.toThrowError('Unexpected DB condition, update successful with no returned record');
+      await expect(User.update(row.id, putDoc)).rejects.toThrowError(
+        'Unexpected DB condition, update successful with no returned record'
+      );
       expect(db.query.mock.calls).toHaveLength(1);
       expect(db.query.mock.calls[0]).toHaveLength(2);
       expect(db.query.mock.calls[0][0]).toBe(
@@ -230,7 +306,9 @@ describe('User Model', () => {
     });
 
     test('User.update with bad input', async () => {
-      await expect(User.update('bad input')).rejects.toThrowError('Id and a put document are required');
+      await expect(User.update('bad input')).rejects.toThrowError(
+        'Id and a put document are required'
+      );
       expect(db.query.mock.calls).toHaveLength(0);
     });
   });
@@ -340,13 +418,14 @@ describe('User Model', () => {
   });
 
   describe('test deleteUser', () => {
-
     test('user deletes themself', async () => {
       const data = dataForDeleteUser(1);
       const row = data[0];
       db.query.mockResolvedValue({ rows: data });
       await User.create(row.userId, row.email);
-      expect(await User.deleteUser(row.userId, row.email)).toBe(`Successfully deleted user from db`);
+      expect(await User.deleteUser(row.userId, row.email)).toBe(
+        `Successfully deleted user from db`
+      );
     });
 
     test('user id or email not found', async () => {
@@ -354,14 +433,18 @@ describe('User Model', () => {
       const row = data[0];
       db.query.mockResolvedValue({ rows: data });
       await User.create(row.userId, row.email);
-      await expect(User.deleteUser(row.email)).rejects.toThrowError('UserId and Email are required.');
+      await expect(User.deleteUser(row.email)).rejects.toThrowError(
+        'UserId and Email are required.'
+      );
     });
 
     test('user deletes themself but no response returned', async () => {
       const data = dataForDeleteUser(1);
       const row = data[0];
-      db.query.mockResolvedValue({ rows: []});
-      await expect(User.deleteUser(row.userId, row.email)).rejects.toThrowError('Unexpected db condition, delete successful with no returned record');
+      db.query.mockResolvedValue({ rows: [] });
+      await expect(User.deleteUser(row.userId, row.email)).rejects.toThrowError(
+        'Unexpected db condition, delete successful with no returned record'
+      );
     });
   });
 });

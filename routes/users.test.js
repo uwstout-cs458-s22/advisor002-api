@@ -1,4 +1,5 @@
 const log = require('loglevel');
+// const { user } = require('pg/lib/defaults');
 const request = require('supertest');
 const app = require('../app')();
 const User = require('../models/User');
@@ -13,7 +14,8 @@ jest.mock('../models/User.js', () => {
     findAll: jest.fn(),
     create: jest.fn(),
     deleteUser: jest.fn(),
-    update: jest.fn()
+    update: jest.fn(),
+    getSemesterSchedule: jest.fn(),
   };
 });
 
@@ -22,7 +24,7 @@ jest.mock('../services/environment', () => {
     port: 3001,
     stytchProjectId: 'project-test-11111111-1111-1111-1111-111111111111',
     stytchSecret: 'secret-test-111111111111',
-    masterAdminEmail: 'master@gmail.com'
+    masterAdminEmail: 'master@gmail.com',
   };
 });
 
@@ -31,7 +33,7 @@ jest.mock('../services/auth', () => {
     authorizeSession: jest.fn().mockImplementation((req, res, next) => {
       res.locals.userId = 'user-test-thingy';
       return next();
-    })
+    }),
   };
 });
 
@@ -45,7 +47,27 @@ function dataForGetUser(rows, offset = 0) {
       email: `email${value}@uwstout.edu`,
       userId: `user-test-someguid${value}`,
       enable: 'false',
-      role: 'user'
+      role: 'user',
+    });
+  }
+  return data;
+}
+
+function dataForGetSemesterSchedule(rows, offset = 0) {
+  const data = [];
+  for (let i = 1; i <= rows; i++) {
+    const value = i + offset;
+    data.push({
+      id: value,
+      section: value,
+      name: `test course ${value}`,
+      credits: value,
+      semesterid: value,
+      courseid: value,
+      year: 2022,
+      type: 'fall',
+      userid: value,
+      taken: false,
     });
   }
   return data;
@@ -253,7 +275,7 @@ describe('GET /users', () => {
       await request(app).get('/users?role=admin&enable=true&query=jacob&limit=100&offset=10');
       expect(User.findAll.mock.calls).toHaveLength(1);
       expect(User.findAll.mock.calls[0]).toHaveLength(4);
-      expect(User.findAll.mock.calls[0][0]).toStrictEqual({role: 'admin', enable: true});
+      expect(User.findAll.mock.calls[0][0]).toStrictEqual({ role: 'admin', enable: true });
       expect(User.findAll.mock.calls[0][1]).toBe('jacob');
       expect(User.findAll.mock.calls[0][2]).toBe('100');
       expect(User.findAll.mock.calls[0][3]).toBe('10');
@@ -305,6 +327,56 @@ describe('GET /users', () => {
       expect(response.body.error.message).toBe('Some Database Failure');
     });
   });
+
+  describe('find a schedule for each semester', () => {
+    test('should respond with a json array object containg the schedule data', async () => {
+      const data = dataForGetSemesterSchedule(5);
+      User.getSemesterSchedule.mockResolvedValueOnce(data);
+      const { body: schedules } = await request(app).get(`/users/${data.userid}/schedule`);
+      expect(schedules).toHaveLength(data.length);
+
+      for (let i = 0; i < data.length; i++) {
+        expect(schedules[i].id).toBe(data[i].id);
+        expect(schedules[i].section).toBe(data[i].section);
+        expect(schedules[i].credits).toBe(data[i].credits);
+        expect(schedules[i].semesterid).toBe(data[i].semesterid);
+        expect(schedules[i].courseid).toBe(data[i].courseid);
+        expect(schedules[i].year).toBe(data[i].year);
+        expect(schedules[i].type).toBe(data[i].type);
+        expect(schedules[i].userid).toBe(data[i].userid);
+        expect(schedules[i].taken).toBe(data[i].taken);
+      }
+    });
+
+    test('should specify json in the content type header', async () => {
+      const data = dataForGetSemesterSchedule(5);
+      User.getSemesterSchedule.mockResolvedValueOnce(data);
+      const response = await request(app).get(`/users/${data.userid}/schedule`);
+      expect(response.headers['content-type']).toEqual(expect.stringContaining('json'));
+    });
+
+    test('should respond with a 200 status code when schedule data returned', async () => {
+      const params = dataForGetSemesterSchedule(1);
+      User.getSemesterSchedule.mockResolvedValueOnce(params);
+      const response = await request(app).get(`/users/${params[0].userid}/schedule`);
+      expect(response.statusCode).toBe(200);
+    });
+
+    test('should respond with a 200 status code when schedule data returned (even no courses in semester)', async () => {
+      const params = dataForGetSemesterSchedule(1);
+      User.getSemesterSchedule.mockResolvedValueOnce([]);
+      const response = await request(app).get(`/users/${params[0].userid}/schedule`);
+      expect(response.statusCode).toBe(200);
+    });
+
+    test('should respond with a 500 status code when an error occurs', async () => {
+      const params = dataForGetSemesterSchedule(1);
+      User.getSemesterSchedule.mockRejectedValueOnce(new Error('Some Database Failure'));
+      const response = await request(app).get(`/users/${params[0].userid}/schedule`);
+      expect(response.statusCode).toBe(500);
+      expect(response.body.error.message).toBe('Some Database Failure');
+    });
+  });
 });
 
 describe('PUT /users', () => {
@@ -325,18 +397,18 @@ describe('PUT /users', () => {
           email: 'fake@email.com',
           role: 'admin',
           enable: true,
-          userId: 'user-test-thingy'
+          userId: 'user-test-thingy',
         };
         const requestParams = {
           userId: row.userId,
-          email: row.email
+          email: row.email,
         };
         const updatedUser = {
           userId: row.userId,
           email: row.email,
           enable: requestParams.enable,
           role: requestParams.role,
-          id: row.id
+          id: row.id,
         };
 
         User.findOne.mockResolvedValueOnce(row).mockResolvedValueOnce(requestor);
@@ -344,7 +416,10 @@ describe('PUT /users', () => {
         await request(app).put(`/users/${row.id}`).send(requestParams);
         expect(User.findOne.mock.calls).toHaveLength((i + 1) * 2);
         expect(User.findOne.mock.calls[i]).toHaveLength(1);
-        expect([User.findOne.mock.calls[i+1][0].userId, User.findOne.mock.calls[i][0].userId]).toContain(requestor.userId);
+        expect([
+          User.findOne.mock.calls[i + 1][0].userId,
+          User.findOne.mock.calls[i][0].userId,
+        ]).toContain(requestor.userId);
         expect(User.update.mock.calls).toHaveLength(i + 1);
         expect(User.update.mock.calls[i]).toHaveLength(2);
         expect(User.update.mock.calls[i][0]).toBe(row.id);
@@ -359,19 +434,19 @@ describe('PUT /users', () => {
           email: 'fake@email.com',
           role: 'admin',
           enable: true,
-          userId: 'user-test-thingy'
+          userId: 'user-test-thingy',
         };
         const requestParams = {
           senderId: requestor.id,
           role: 'admin',
-          enable: true
+          enable: true,
         };
         const updatedUser = {
           userId: row.userId,
           email: row.email,
           enable: requestParams.enable,
           role: requestParams.role,
-          id: row.id
+          id: row.id,
         };
 
         User.findOne.mockResolvedValueOnce(row).mockResolvedValueOnce(requestor);
@@ -391,16 +466,16 @@ describe('PUT /users', () => {
       const requestParams = {
         senderId: 1,
         enable: true,
-        role: 'admin'
+        role: 'admin',
       };
       const requestor = {
         id: 75,
         email: 'fake@email.com',
         role: 'admin',
         enable: true,
-        userId: 'user-test-thingy'
+        userId: 'user-test-thingy',
       };
-      User.findOne.mockResolvedValueOnce({ row: row }).mockResolvedValueOnce({ row: requestor});
+      User.findOne.mockResolvedValueOnce({ row: row }).mockResolvedValueOnce({ row: requestor });
       User.update.mockRejectedValueOnce(new Error('some database error'));
       const response = await request(app).put('/users/1').send(requestParams);
       expect(response.statusCode).toBe(500);
@@ -408,7 +483,7 @@ describe('PUT /users', () => {
     test('should respond with a 404 not found', async () => {
       const requestParams = {
         enable: true,
-        role: 'admin'
+        role: 'admin',
       };
       User.findOne.mockResolvedValueOnce({}).mockResolvedValueOnce({});
       const response = await request(app).put('/users/1').send(requestParams);
@@ -430,12 +505,12 @@ describe('PUT /users', () => {
         email: 'fake@email.com',
         role: 'user',
         enable: true,
-        userId: 'user-test-thingy'
+        userId: 'user-test-thingy',
       };
       const requestParams = {
         senderId: requestor.id,
         enable: true,
-        role: 'admin'
+        role: 'admin',
       };
       User.findOne.mockResolvedValueOnce(row).mockResolvedValueOnce(requestor);
       const response = await request(app).put(`/users/${row.id}`).send(requestParams);
@@ -459,7 +534,7 @@ describe('POST /users', () => {
         const row = data[i];
         const requestParams = {
           userId: row.userId,
-          email: row.email
+          email: row.email,
         };
         User.findOne.mockResolvedValueOnce({});
         User.create.mockResolvedValueOnce(row);
@@ -481,7 +556,7 @@ describe('POST /users', () => {
         User.create.mockResolvedValueOnce(row);
         const requestParams = {
           userId: row.userId,
-          email: row.email
+          email: row.email,
         };
         const { body: user } = await request(app).post('/users').send(requestParams);
         expect(user.id).toBe(row.id);
@@ -499,7 +574,7 @@ describe('POST /users', () => {
       User.create.mockResolvedValueOnce(row);
       const requestParms = {
         userId: row.userId,
-        email: row.email
+        email: row.email,
       };
       const response = await request(app).post('/users').send(requestParms);
       expect(response.headers['content-type']).toEqual(expect.stringContaining('json'));
@@ -512,7 +587,7 @@ describe('POST /users', () => {
       User.create.mockResolvedValueOnce(row);
       const requestParms = {
         userId: row.userId,
-        email: row.email
+        email: row.email,
       };
       const response = await request(app).post('/users').send(requestParms);
       expect(response.statusCode).toBe(201);
@@ -523,7 +598,7 @@ describe('POST /users', () => {
       const row = data[0];
       const requestParms = {
         userId: row.userId,
-        email: row.email
+        email: row.email,
       };
       User.findOne.mockResolvedValueOnce(row);
       User.create.mockResolvedValueOnce(row);
@@ -536,7 +611,7 @@ describe('POST /users', () => {
       const row = data[0];
       const requestParms = {
         userId: row.userId,
-        email: row.email
+        email: row.email,
       };
       User.findOne.mockResolvedValueOnce({});
       User.create.mockResolvedValueOnce(null);
@@ -549,7 +624,7 @@ describe('POST /users', () => {
       const row = data[0];
       const requestParms = {
         userId: row.userId,
-        email: row.email
+        email: row.email,
       };
       User.findOne.mockResolvedValueOnce(null);
       const response = await request(app).post('/users').send(requestParms);
@@ -561,7 +636,7 @@ describe('POST /users', () => {
       const row = data[0];
       const requestParms = {
         userId: row.userId,
-        email: row.email
+        email: row.email,
       };
       User.findOne.mockRejectedValueOnce(new Error('some database error'));
       const response = await request(app).post('/users').send(requestParms);
@@ -573,7 +648,7 @@ describe('POST /users', () => {
       const row = data[0];
       const requestParms = {
         userId: row.userId,
-        email: row.email
+        email: row.email,
       };
       User.findOne.mockResolvedValueOnce({});
       User.create.mockRejectedValueOnce(new Error('some database error'));
@@ -613,52 +688,67 @@ describe('DELETE /users', () => {
     User.findAll.mockResolvedValue(null);
   });
 
-test('Program should respond with code 400 if query is invalid', async () => {
-  const data = dataForGetUser(1);
-  const row = data[0];
-  await User.create(row.userId, row.email);
-  const response = await request(app).delete('/users').send({ email: 'email1@uwstout.edu' });
-  expect(response.statusCode).toBe(400);
+  test('Program should respond with code 400 if query is invalid', async () => {
+    const data = dataForGetUser(1);
+    const row = data[0];
+    await User.create(row.userId, row.email);
+    const response = await request(app).delete('/users').send({ email: 'email1@uwstout.edu' });
+    expect(response.statusCode).toBe(400);
   });
 
-test('Program should respond with code 404 if user is empty', async () =>  {
-  User.findOne.mockResolvedValueOnce({}).mockResolvedValueOnce({})
-  const response = await request(app).delete('/users').send({userId: 10810, email: "something@moveBy.uwstout.edu"});
-  expect(response.statusCode).toBe(404);
-});
+  test('Program should respond with code 404 if user is empty', async () => {
+    User.findOne.mockResolvedValueOnce({}).mockResolvedValueOnce({});
+    const response = await request(app)
+      .delete('/users')
+      .send({ userId: 10810, email: 'something@moveBy.uwstout.edu' });
+    expect(response.statusCode).toBe(404);
+  });
 
-test('Program should respond with code 403 if user is not admin or themself', async () =>  {
-  User.findOne.mockResolvedValueOnce({id: `12345`,
-  email: `emailmine@uwstout.edu`,
-  userId: `user-test-someguid`,
-  enable: 'false',
-  role: 'user'}).mockResolvedValueOnce({id: `5457846`,
-  email: `emailanotheremail@uwstout.edu`,
-  userId: `user-test-someguid14237`,
-  enable: 'false',
-  role: 'user'})
+  test('Program should respond with code 403 if user is not admin or themself', async () => {
+    User.findOne
+      .mockResolvedValueOnce({
+        id: `12345`,
+        email: `emailmine@uwstout.edu`,
+        userId: `user-test-someguid`,
+        enable: 'false',
+        role: 'user',
+      })
+      .mockResolvedValueOnce({
+        id: `5457846`,
+        email: `emailanotheremail@uwstout.edu`,
+        userId: `user-test-someguid14237`,
+        enable: 'false',
+        role: 'user',
+      });
 
-  const response = await request(app).delete('/users').send({userId: 12345, email: "emailanotheremail@uwstout.edu"});
-  expect(response.statusCode).toBe(403);
-});
+    const response = await request(app)
+      .delete('/users')
+      .send({ userId: 12345, email: 'emailanotheremail@uwstout.edu' });
+    expect(response.statusCode).toBe(403);
+  });
 
-test('Program should respond with code 200 if user is not admin or themself', async () =>  {
-  User.findOne.mockResolvedValueOnce({id: 12345,
-  email: `emailmine@uwstout.edu`,
-  userId: `user-test-someguid`,
-  enable: 'false',
-  role: 'admin'}).mockResolvedValueOnce({id: 5457846,
-  email: `emailanotheremail@uwstout.edu`,
-  userId: `user-test-someguid14237`,
-  enable: 'false',
-  role: 'user'})
+  test('Program should respond with code 200 if user is not admin or themself', async () => {
+    User.findOne
+      .mockResolvedValueOnce({
+        id: 12345,
+        email: `emailmine@uwstout.edu`,
+        userId: `user-test-someguid`,
+        enable: 'false',
+        role: 'admin',
+      })
+      .mockResolvedValueOnce({
+        id: 5457846,
+        email: `emailanotheremail@uwstout.edu`,
+        userId: `user-test-someguid14237`,
+        enable: 'false',
+        role: 'user',
+      });
 
-  User.deleteUser.mockResolvedValueOnce(`Successfully deleted user from db`);
+    User.deleteUser.mockResolvedValueOnce(`Successfully deleted user from db`);
 
-  const response = await request(app).delete('/users').send({userId: 12345, email: "emailmine@uwstout.edu"});
-  expect(response.statusCode).toBe(200);
-});
-
-
-
+    const response = await request(app)
+      .delete('/users')
+      .send({ userId: 12345, email: 'emailmine@uwstout.edu' });
+    expect(response.statusCode).toBe(200);
+  });
 });

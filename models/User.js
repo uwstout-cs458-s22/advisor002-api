@@ -69,6 +69,7 @@ async function create(userId, email) {
   }
 }
 
+// should return a list of courses for each semester in json
 async function getSemesterSchedule(userid, semesterid, year, type) {
   if (userid && semesterid && year) {
     const { text, params } = whereParamsCourses({
@@ -79,11 +80,7 @@ async function getSemesterSchedule(userid, semesterid, year, type) {
     });
 
     const res = await db.query(
-      `SELECT * FROM "course" as c
-	JOIN "courseSemester" as cs on cs.courseid = c.id
-	JOIN "semester" as s ON s.id = cs.semesterid
-  JOIN "userCourse" as uc ON uc.courseid = c.id
-	${text};`,
+      `SELECT * FROM "course" as c JOIN "courseSemester" as cs on cs.courseid = c.id JOIN "semester" as s ON s.id = cs.semesterid JOIN "userCourse" as uc ON uc.courseid = c.id ${text};`,
       params
     );
 
@@ -96,10 +93,10 @@ async function getSemesterSchedule(userid, semesterid, year, type) {
       );
       return res.rows[0];
     } // If not, throw error
-    throw HttpError(500, 'Unexpected DB condition, update successful with no returned record');
+    throw HttpError(500, 'Unexpected DB condition,  select successful with no returned record');
   } else {
     // If missing parameters, throw error
-    throw HttpError(400, 'Id and a course attribute required');
+    throw HttpError(400, 'userid, semester, year, and type required');
   }
 }
 
