@@ -3,7 +3,7 @@ const log = require('loglevel');
 const HttpError = require('http-errors');
 const { isEmpty } = require('./../services/utils');
 const User = require('./../models/User');
-const { authorizeSession } = require('./../services/auth');
+const { authorizeSession, checkPermissions } = require('./../services/auth');
 
 module.exports = () => {
   const router = express.Router();
@@ -88,8 +88,8 @@ module.exports = () => {
       if (isEmpty(user) || isEmpty(sender)) {
         throw new HttpError.NotFound();
       }
-
-      if (!(sender.role === 'admin' || user.id === sender.id)) {
+      
+      if(checkPermissions(sender.role) < 2) {
         throw new HttpError.Forbidden('You are not allowed to do this');
       }
 
@@ -122,23 +122,23 @@ module.exports = () => {
     }
   });
 
-  router.delete('/', async (req, res, next) => {
+  router.delete('/:id(\\d+)', async (req, res, next) => {
     try {
-      const userId = req.body.userId;
-      const email = req.body.email;
-      const user = await User.findOne({ userId: userId });
+      const id = req.params.id;
+      const senderId = res.locals.userId;
+      const user = await User.findOne({ id: id });
+      const sender = await User.findOne({ userId: senderId });
 
       // check for required parameters
-      if (!email || !userId) {
+      if (!id) {
         throw HttpError(400, 'Required Parameters Missing');
       }
       // check that user exists
       else if (isEmpty(user)) {
         throw new HttpError.NotFound();
       } else {
-        const role = await User.findOne({ email: email });
-        if (role.role === 'admin' || user.email === email) {
-          await User.deleteUser(userId, email);
+        if (checkPermissions(sender.role) >= 2 || user.email === sender.email) {
+          await User.deleteUser(id);
           res.status(200);
           res.send();
         } else {

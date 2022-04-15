@@ -422,29 +422,18 @@ describe('User Model', () => {
       const data = dataForDeleteUser(1);
       const row = data[0];
       db.query.mockResolvedValue({ rows: data });
-      await User.create(row.userId, row.email);
-      expect(await User.deleteUser(row.userId, row.email)).toBe(
-        `Successfully deleted user from db`
-      );
+      expect(await User.deleteUser(row.id)).toBe(`Successfully deleted user from db`);
     });
 
     test('user id or email not found', async () => {
-      const data = dataForDeleteUser(1);
-      const row = data[0];
-      db.query.mockResolvedValue({ rows: data });
-      await User.create(row.userId, row.email);
-      await expect(User.deleteUser(row.email)).rejects.toThrowError(
-        'UserId and Email are required.'
-      );
+      await expect(User.deleteUser()).rejects.toThrowError('UserId is required.');
     });
 
     test('user deletes themself but no response returned', async () => {
       const data = dataForDeleteUser(1);
       const row = data[0];
-      db.query.mockResolvedValue({ rows: [] });
-      await expect(User.deleteUser(row.userId, row.email)).rejects.toThrowError(
-        'Unexpected db condition, delete successful with no returned record'
-      );
+      db.query.mockResolvedValue({ rows: []});
+      await expect(User.deleteUser(row.id, row.email)).rejects.toThrowError('Unexpected db condition, delete successful with no returned record');
     });
   });
 });

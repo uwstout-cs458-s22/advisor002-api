@@ -104,17 +104,17 @@ async function getSemesterSchedule(userid, semesterid, year, type) {
 // if db error, db.query will throw a rejected promise
 // userId refers to the user being deleted
 // email is used to check for admin role on the deleter
-async function deleteUser(userId, email) {
+async function deleteUser(id) {
   // email is required
-  if (userId && email) {
-    const { text, params } = whereParams({ userId: userId });
+  if (id) {
+    const { text, params } = whereParams({ id: id });
     const res = await db.query(`DELETE FROM "user" ${text} RETURNING *;`, params);
     if (res.rows.length > 0) {
       return `Successfully deleted user from db`;
     }
     throw HttpError(500, 'Unexpected db condition, delete successful with no returned record');
   } else {
-    throw HttpError(400, 'UserId and Email are required.');
+    throw HttpError(400, 'UserId is required.');
   }
 }
 

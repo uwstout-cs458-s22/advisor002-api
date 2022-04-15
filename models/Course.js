@@ -61,9 +61,9 @@ async function findOne(criteria) {
   // Use the course whereParams function to setup a prepared statement
   const { text, params } = whereParamsCourses(criteria);
   // Setup prepared statement to send to server with the variables
-  const res = await db.query(`SELECT * from "course" AS c ` +
-                                `JOIN "courseSemester" AS cs ON cs.courseId = c.id ` +
-                                `JOIN "semester" AS s ON s.id = cs.semesterId ` +
+  const res = await db.query(`SELECT c.*, s.type, s.year from "course" AS c ` +
+                                `LEFT JOIN "courseSemester" AS cs ON cs.courseId = c.id ` +
+                                `LEFT JOIN "semester" AS s ON s.id = cs.semesterId ` +
                               `${text};`, params);
 
   // If the result count is more than 0 than return the results gathered from the database
@@ -86,9 +86,9 @@ async function findAll(criteria, limit = 100, offset = 0) {
   const n = params.length;
   const p = params.concat([limit, offset])
   // Setup query and add variables for prepared statement and send it
-  const res = await db.query(`SELECT * from "course" AS c ` +
-                                `JOIN "courseSemester" AS cs ON cs.courseId = c.id ` +
-                                `JOIN "semester" AS s ON s.id = cs.semesterId ` +
+  const res = await db.query(`SELECT c.*, s.type, s.year from "course" AS c ` +
+                                `LEFT JOIN "courseSemester" AS cs ON cs.courseId = c.id ` +
+                                `LEFT JOIN "semester" AS s ON s.id = cs.semesterId ` +
                               `${text} LIMIT $${n + 1} OFFSET $${n + 2};`, p);
   log.debug(
     `Retrieved ${res.rows.length} courses from db with criteria ${text}, ${JSON.stringify(params)}`
@@ -96,6 +96,25 @@ async function findAll(criteria, limit = 100, offset = 0) {
   
   // Return the results
   return res.rows;
+}
+
+// requests are formatted /courses?categoryid=...
+// if found return the results
+// if not found return {}
+async function findCoursesInCategory(categoryid) {
+  // Query for all courses that are in the category with the id given
+  const res = await  db.query(`SELECT * FROM course ` +
+  `INNER JOIN "courseCategory" ON "courseCategory".courseid = "course".id ` +
+  `INNER JOIN "category" ON "category".id = "courseCategory".categoryid WHERE category.id = ${categoryid}`);
+
+  if(res.rows.length > 0){
+    log.debug(`Retrieved ${res.rows.length} courses from db with category id ${categoryid}`);
+    // Return the results
+    return res.rows;
+  } 
+
+  log.debug(`Could not find courses in category with id: ${categoryid}`);
+  return {};
 }
 
 // Edit given course's attributes
@@ -209,10 +228,12 @@ async function editCourse(id, resultCourse) {
   }
 }
 
+
 module.exports = {
   createCourse,
   deleteCourse,
   findOne,
   findAll,
+  findCoursesInCategory,
   editCourse
 };

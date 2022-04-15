@@ -1,7 +1,7 @@
 const express = require('express');
 const log = require('loglevel');
 const HttpError = require('http-errors');
-const { authorizeSession } = require('./../services/auth');
+const { authorizeSession, checkPermissions } = require('./../services/auth');
 const Course = require('./../models/Course');
 const User = require('./../models/User');
 const { isEmpty } = require('./../services/utils');
@@ -63,7 +63,7 @@ module.exports = () => {
         throw new HttpError.NotFound();
       } else {
         // Check the user's role for permission (must be role 'director')
-        if (sender.role === 'director' || sender.role === 'admin') {
+        if (checkPermissions(sender.role) >= 1) {
           const newCourseJSON = {
             name: req.body.name,
             section: req.body.section,
@@ -90,6 +90,22 @@ module.exports = () => {
   router.get('/', authorizeSession, async (req, res, next) => {
     try {
       const criteria = {};
+
+      log.debug(req.query);
+
+      if(req.query.categoryid){
+        try {
+          const categoryid = req.query.categoryid;
+          const coursesFromCategory = await Course.findCoursesInCategory(categoryid);
+          if(isEmpty(coursesFromCategory)){
+            throw new HttpError.NotFound();
+          }
+          log.info(`${req.method} ${req.originalUrl} success: returning courses with category id ${categoryid}`);
+          return res.send(coursesFromCategory);
+        } catch (error) {
+          next(error);
+        }
+      }
 
       if(req.query.credits) {
         if(!parseInt(req.query.credits) && req.query.credits !== '0') {
@@ -129,7 +145,7 @@ module.exports = () => {
   router.get('/:courseid', authorizeSession, async (req, res, next) => {
     try {
       const courseid = req.params.courseid;
-      const courses = await Course.findOne({id: courseid});
+      const courses = await Course.findAll({id: courseid});
       if(isEmpty(courses)) {
         throw new HttpError.NotFound();
       }
