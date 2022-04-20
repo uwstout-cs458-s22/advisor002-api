@@ -13,9 +13,9 @@ async function createCourse(name, credits, section, type, year) {
     });
 
 
-    const courseExists = Object.keys(await findOne({name: name, section: section})).length === 0 ? false : true;
+    const keyLength = Object.keys(await findOne({name: name, section: section})).length;
 
-    if (!courseExists) {
+    if (keyLength === 0) {
       const res = await db.query(`INSERT INTO "course" ${text} RETURNING *;`, params);
 
       if (res.rows.length > 0) {

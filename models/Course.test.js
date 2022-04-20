@@ -287,7 +287,6 @@ describe('Course Model', () => {
       const data = dataForGetCourse(1);
       const row = data[0];
       const semester = {id: 1, type: 'spring', year: 2019};
-      const courseSemester = {semesterid: semester.id, courseid: row.id};
       const putDoc = {
         name: 'NewCourse',
         type: semester.type,
@@ -303,7 +302,6 @@ describe('Course Model', () => {
       const data = dataForGetCourse(1);
       const row = data[0];
       const semester = {id: 1, type: 'spring', year: 2019};
-      const courseSemester = {semesterid: semester.id, courseid: row.id};
       const putDoc = {
         name: 'NewCourse',
         type: semester.type,
