@@ -735,29 +735,4 @@ test('Program should respond with code 200 if user is not admin or themself', as
   const response = await request(app).delete('/users/12345').send();
   expect(response.statusCode).toBe(200);
 });
-
-  test('Program should respond with code 200 if user is not admin or themself', async () => {
-    User.findOne
-      .mockResolvedValueOnce({
-        id: 12345,
-        email: `emailmine@uwstout.edu`,
-        userId: `user-test-someguid`,
-        enable: 'false',
-        role: 'admin',
-      })
-      .mockResolvedValueOnce({
-        id: 5457846,
-        email: `emailanotheremail@uwstout.edu`,
-        userId: `user-test-someguid14237`,
-        enable: 'false',
-        role: 'user',
-      });
-
-    User.deleteUser.mockResolvedValueOnce(`Successfully deleted user from db`);
-
-    const response = await request(app)
-      .delete('/users')
-      .send({ userId: 12345, email: 'emailmine@uwstout.edu' });
-    expect(response.statusCode).toBe(200);
-  });
 });
