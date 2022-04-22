@@ -43,15 +43,17 @@ async function editSemester(id, resultSemester) {
 
       const newSemesterJSON = {}
 
-      if (!(resultSemester.year == null))
+      if (!(resultSemester.year == null)) {
         newSemesterJSON.year = resultSemester.year
+      }
 
-      if (!(resultSemester.type == null))
+      if (!(resultSemester.type == null)) {
         if (resultSemester.type !== 'winter' && resultSemester.type !== 'spring' && resultSemester.type !== 'summer' && resultSemester.type !== 'fall') {
           throw HttpError(400, `Invalid type, must be 'spring', 'summer', 'fall', or 'winter'`);
         } else {
           newSemesterJSON.type = resultSemester.type
         }
+      }
 
 
       const {
