@@ -17,18 +17,20 @@ module.exports = () => {
       const section = req.body[0].section;
       const name = req.body[0].name;
       const credits = req.body[0].credits;
+      const type = req.body[0].type;
+      const year = req.body[0].year;
 
       if (!name || !userId || !credits || !section) {
         throw HttpError(400, 'Required Parameters Missing');
       }
       const user = await User.findOne({ userId: userId });
-      if (user.role !== 'director') {
+      if (!checkPermissions(user.role) >= 1) {
         throw HttpError(
           403,
           `requester ${user.email} does not have permissions to create a course`
         );
       } else {
-        const course = await Course.createCourse(name, credits, section);
+        const course = await Course.createCourse(name, credits, section, type, year);
         res.status(201); // otherwise
         res.setHeader('Location', `/courses/${name}`);
         log.info(`${req.method} ${req.originalUrl} success: returning course ${name}}`);
@@ -68,7 +70,9 @@ module.exports = () => {
             name: req.body.name,
             section: req.body.section,
             credits: req.body.credits,
-            prefix: req.body.prefix
+            prefix: req.body.prefix,
+            type: req.body.type,
+            year: req.body.year
           };
 
           // Call the function to edit the course parameters and return results
@@ -94,17 +98,7 @@ module.exports = () => {
       log.debug(req.query);
 
       if(req.query.categoryid){
-        try {
-          const categoryid = req.query.categoryid;
-          const coursesFromCategory = await Course.findCoursesInCategory(categoryid);
-          if(isEmpty(coursesFromCategory)){
-            throw new HttpError.NotFound();
-          }
-          log.info(`${req.method} ${req.originalUrl} success: returning courses with category id ${categoryid}`);
-          return res.send(coursesFromCategory);
-        } catch (error) {
-          next(error);
-        }
+        criteria.categoryid = req.query.categoryid;
       }
 
       if(req.query.credits) {
