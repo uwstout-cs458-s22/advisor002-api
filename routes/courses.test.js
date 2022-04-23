@@ -408,7 +408,7 @@ describe('POST /courses', () => {
     expect(response.statusCode).toBe(403);
   });
 
-  test('Admin should not be allowed to create course', async () => {
+  test('Admin should be allowed to create course', async () => {
     User.findOne.mockResolvedValueOnce({
       id: 12345,
       email: `emailmine@uwstout.edu`,
@@ -426,7 +426,7 @@ describe('POST /courses', () => {
           credits: 3,
         },
       ]);
-    expect(response.statusCode).toBe(403);
+    expect(response.statusCode).toBe(201);
   });
 
   test('Director should be allowed to create course', async () => {
