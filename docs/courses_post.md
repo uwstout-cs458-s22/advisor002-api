@@ -21,13 +21,15 @@ Create a new Course. If no additional information about the course is provided (
   _Optional:_ type, year
 
   ```json
-  {
-    "section": 101,
-    "name": "Computer Science I",
-    "credits": 3,
-    "type": "spring",
-    "year": 2022
-  }
+  [
+    {
+      "section": 101,
+      "name": "Computer Science I",
+      "credits": 3,
+      "type": "spring",
+      "year": 2022
+    }
+  ]
   ```
 
 - **Auth required** : YES, Bearer token in Authorization header
