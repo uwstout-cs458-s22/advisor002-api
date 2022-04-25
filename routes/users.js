@@ -13,18 +13,18 @@ module.exports = () => {
       const criteria = {};
       const query = req.query.query ? req.query.query : null;
 
-      if(req.query.enable) {
-        criteria.enable = (req.query.enable === 'true');
+      if (req.query.enable) {
+        criteria.enable = req.query.enable === 'true';
       }
 
-      if(req.query.role) {
+      if (req.query.role) {
         criteria.role = req.query.role;
       }
-      
+
       let users = [];
 
       users = await User.findAll(criteria, query, req.query.limit, req.query.offset);
-      
+
       log.info(`${req.method} ${req.originalUrl} success: returning ${users.length} user(s)`);
       return res.send(users);
     } catch (error) {
@@ -60,21 +60,35 @@ module.exports = () => {
     }
   });
 
+  router.get('/:userid/schedule', async (req, res, next) => {
+    try {
+      const userid = req.params.userid;
+      const semesterid = req.query.semesterid;
+      const year = req.query.year;
+      const type = req.query.type;
+
+      const semesterschedule = await User.getSemesterSchedule(userid, semesterid, year, type);
+      return res.send(semesterschedule);
+    } catch (error) {
+      next(error);
+    }
+  });
+
   router.put('/:id(\\d+)', authorizeSession, async (req, res, next) => {
     try {
       const id = req.params.id;
       const user = await User.findOne({ id: id });
 
-      if(isEmpty(req.body)) {
+      if (isEmpty(req.body)) {
         throw new HttpError.BadRequest('Required parameters are missing');
       }
 
       const sender = await User.findOne({ userId: res.locals.userId });
 
-      if(isEmpty(user) || isEmpty(sender)) {
+      if (isEmpty(user) || isEmpty(sender)) {
         throw new HttpError.NotFound();
       }
-
+      
       if(checkPermissions(sender.role) < 2) {
         throw new HttpError.Forbidden('You are not allowed to do this');
       }
@@ -83,8 +97,7 @@ module.exports = () => {
 
       res.setHeader('Location', `/users/${user.id}`);
       return res.send(updatedUser);
-
-    } catch(error) {
+    } catch (error) {
       next(error);
     }
   });
