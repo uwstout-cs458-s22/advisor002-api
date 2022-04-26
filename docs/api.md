@@ -18,3 +18,11 @@ Every request received by the API must also be accompanied with the Stytch sessi
 [/users POST](users_post.md)
 
 [Editing attributes PUT](edit.md)
+
+[/users DELETE](users_delete.md)
+
+[/courses GET](courses_get.md)
+
+[/courses POST](courses_post.md)
+
+[/courses DELETE](courses_delete.md)
