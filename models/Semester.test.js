@@ -44,7 +44,39 @@ describe('Semester Model', () => {
     db.query.mockResolvedValue(null);
   });
 
+  describe('DELETE /semester', () => {
+    beforeEach(() => {
+      db.query.mockReset();
+      db.query.mockResolvedValue(null);
+    });
 
+    test('400 if id not supplied', async () => {
+      await expect(Semester.deleteSemester()).rejects.toThrowError('Id is required to delete a semester');
+    });
+
+    test('Unexpected db condition when no rows returned', async () => {
+      db.query.mockResolvedValueOnce({rows: []});
+
+      await expect(Semester.deleteSemester(100)).rejects.toThrowError('Unexpected DB condition');
+      expect(db.query.mock.calls).toHaveLength(1);
+      expect(db.query.mock.calls[0]).toHaveLength(2);
+      expect(db.query.mock.calls[0][0]).toBe('DELETE FROM "semester" WHERE "id"=$1 RETURNING *;');
+    });
+
+    test('Unexpected db condition when no rows returned', async () => {
+      const rows = dataForGetSemester(1)[0];
+
+      db.query.mockResolvedValueOnce({rows: [rows]});
+
+      const result = await Semester.deleteSemester(rows.id);
+
+      expect(result).toBe('Successfully deleted semester');
+      expect(db.query.mock.calls).toHaveLength(1);
+      expect(db.query.mock.calls[0]).toHaveLength(2);
+      expect(db.query.mock.calls[0][0]).toBe('DELETE FROM "semester" WHERE "id"=$1 RETURNING *;');
+      expect(db.query.mock.calls[0][1][0]).toBe(rows.id);
+    });
+  })
 
   describe('querying a single semester by id', () => {
 

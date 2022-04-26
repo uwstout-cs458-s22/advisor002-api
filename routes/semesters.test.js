@@ -25,7 +25,8 @@ function dataForGetSemester(rows, offset = 0) {
 jest.mock('../models/Semester.js', () => {
   return {
     findOne: jest.fn(),
-    editSemester: jest.fn()
+    editSemester: jest.fn(),
+    deleteSemester: jest.fn()
   };
 });
 
@@ -62,6 +63,81 @@ jest.mock('../services/auth', () => {
   };
 });
 
+describe('DELETE /semesters', () => {
+  beforeEach(() => {
+    Semester.findOne.mockReset();
+    Semester.findOne.mockResolvedValue(null);
+    Semester.deleteSemester.mockReset();
+    Semester.deleteSemester.mockRejectedValue(null);
+    User.findOne.mockReset();
+    User.findOne.mockResolvedValue(null);
+  });
+
+  test('403 user not allowed to perform this action', async () => {
+    const user = {
+      id: 1,
+      userId: 'user-test-thingy',
+      role: 'user',
+      email: 'fake-email@email.com'
+    }
+
+    User.findOne.mockResolvedValueOnce(user);
+    const response = await request(app).delete(`/semesters/1`);
+
+    expect(response.statusCode).toBe(403);
+  });
+
+  test('404 semester not found', async () => {
+    const user = {
+      id: 1,
+      userId: 'user-test-thingy',
+      role: 'director',
+      email: 'fake-email@email.com'
+    }
+
+    Semester.findOne.mockResolvedValueOnce({});
+    User.findOne.mockResolvedValueOnce(user);
+    const response = await request(app).delete(`/semesters/1`);
+
+    expect(response.statusCode).toBe(404);
+  });
+
+  test('200 semester deleted successfully as director', async () => {
+    const user = {
+      id: 1,
+      userId: 'user-test-thingy',
+      role: 'director',
+      email: 'fake-email@email.com'
+    }
+
+    const semester = dataForGetSemester(1)[0];
+
+    Semester.findOne.mockResolvedValueOnce(semester);
+    Semester.deleteSemester.mockResolvedValueOnce('Successfully deleted semester');
+    User.findOne.mockResolvedValueOnce(user);
+    const response = await request(app).delete(`/semesters/${semester.id}`);
+
+    expect(response.statusCode).toBe(200);
+  });
+
+  test('200 semester deleted successfully as admin', async () => {
+    const user = {
+      id: 1,
+      userId: 'user-test-thingy',
+      role: 'admin',
+      email: 'fake-email@email.com'
+    }
+
+    const semester = dataForGetSemester(1)[0];
+
+    Semester.findOne.mockResolvedValueOnce(semester);
+    Semester.deleteSemester.mockResolvedValueOnce('Successfully deleted semester');
+    User.findOne.mockResolvedValueOnce(user);
+    const response = await request(app).delete(`/semesters/${semester.id}`);
+
+    expect(response.statusCode).toBe(200);
+  });
+});
 
 describe('GET /semesters', () => {
   beforeEach(() => {
