@@ -93,11 +93,6 @@ describe('DELETE /courses', () => {
     User.findOne.mockResolvedValue(null);
   });
 
-  test('Parameters missing', async () => {
-    const response = await request(app).delete('/courses').send({});
-    expect(response.statusCode).toBe(400);
-  });
-
   test('Cannot find locals.userId', async () => {
     Course.findOne.mockResolvedValueOnce({
       id: `145`,
@@ -106,7 +101,7 @@ describe('DELETE /courses', () => {
       credits: 3,
     });
 
-    const response = await request(app).delete('/courses').send({ id: '145' });
+    const response = await request(app).delete(`/courses/${145}`).send();
     expect(response.statusCode).toBe(403);
   });
 
@@ -125,11 +120,11 @@ describe('DELETE /courses', () => {
       role: 'user',
     });
 
-    const response = await request(app).delete('/courses').send({ id: '145' });
+    const response = await request(app).delete(`/courses/${145}`).send();
     expect(response.statusCode).toBe(403);
   });
 
-  test('Admin should not be allowed to delete course', async () => {
+  test('Admin should be allowed to delete course', async () => {
     Course.findOne.mockResolvedValueOnce({
       id: `145`,
       section: `505`,
@@ -145,8 +140,10 @@ describe('DELETE /courses', () => {
       role: 'admin',
     });
 
-    const response = await request(app).delete('/courses').send({ id: '145' });
-    expect(response.statusCode).toBe(403);
+    Course.deleteCourse.mockResolvedValueOnce(`Successfully deleted course from db`);
+
+    const response = await request(app).delete(`/courses/${145}`).send();
+    expect(response.statusCode).toBe(200);
   });
 
   test('Director should be allowed to delete course', async () => {
@@ -167,7 +164,7 @@ describe('DELETE /courses', () => {
 
     Course.deleteCourse.mockResolvedValueOnce(`Successfully deleted course from db`);
 
-    const response = await request(app).delete('/courses').send({ id: '145' });
+    const response = await request(app).delete(`/courses/${145}`).send();
     expect(response.statusCode).toBe(200);
   });
 
@@ -182,7 +179,7 @@ describe('DELETE /courses', () => {
       role: 'director',
     });
 
-    const response = await request(app).delete('/courses').send({ id: '145' });
+    const response = await request(app).delete(`/courses/${145}`).send();
     expect(response.statusCode).toBe(404);
   });
 });
