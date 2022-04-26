@@ -44,7 +44,7 @@ describe('Semester Model', () => {
     db.query.mockResolvedValue(null);
   });
 
-  describe('DELETE /semester', () => {
+  describe('Delete semester', () => {
     beforeEach(() => {
       db.query.mockReset();
       db.query.mockResolvedValue(null);
@@ -63,7 +63,7 @@ describe('Semester Model', () => {
       expect(db.query.mock.calls[0][0]).toBe('DELETE FROM "semester" WHERE "id"=$1 RETURNING *;');
     });
 
-    test('Unexpected db condition when no rows returned', async () => {
+    test('Successfully delete semester', async () => {
       const rows = dataForGetSemester(1)[0];
 
       db.query.mockResolvedValueOnce({rows: [rows]});
