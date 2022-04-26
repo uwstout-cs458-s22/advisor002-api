@@ -271,7 +271,9 @@ describe('PUT /courses', () => {
         resultCourseParams,
       });
 
-      const { body: course } = await request(app).put(`/courses/${row.id}`).send(newCourseParams);
+      const {
+        body: course
+      } = await request(app).put(`/courses/${row.id}`).send(newCourseParams);
       expect(course.id).toBe(newCourseParams.id);
     });
 
@@ -376,7 +378,11 @@ describe('POST /courses', () => {
       role: 'user',
     });
 
-    const fakeCourse = { name: 'operating systems', credits: 4, section: 2 };
+    const fakeCourse = {
+      name: 'operating systems',
+      credits: 4,
+      section: 2
+    };
     Course.findOne.mockResolvedValueOnce(fakeCourse);
 
     const response = await request(app).post('/courses').send([{}]);
@@ -395,13 +401,11 @@ describe('POST /courses', () => {
 
     const response = await request(app)
       .post('/courses')
-      .send([
-        {
-          section: 505,
-          name: `course name`,
-          credits: 3,
-        },
-      ]);
+      .send([{
+        section: 505,
+        name: `course name`,
+        credits: 3,
+      }, ]);
     expect(response.statusCode).toBe(403);
   });
 
@@ -416,13 +420,11 @@ describe('POST /courses', () => {
 
     const response = await request(app)
       .post('/courses')
-      .send([
-        {
-          section: 505,
-          name: `course name`,
-          credits: 3,
-        },
-      ]);
+      .send([{
+        section: 505,
+        name: `course name`,
+        credits: 3,
+      }, ]);
     expect(response.statusCode).toBe(201);
   });
 
@@ -439,13 +441,11 @@ describe('POST /courses', () => {
 
     const response = await request(app)
       .post('/courses')
-      .send([
-        {
-          section: 505,
-          name: `course name`,
-          credits: 3,
-        },
-      ]);
+      .send([{
+        section: 505,
+        name: `course name`,
+        credits: 3,
+      }, ]);
     expect(response.statusCode).toBe(201);
   });
 });
@@ -458,6 +458,7 @@ describe('Get /courses', () => {
     Course.findCoursesInCategory.mockReset();
     Course.findCoursesInCategory.mockResolvedValue(null);
   });
+
   describe('querying a group of courses', () => {
     test('should make a call to Course.findAll', async () => {
       const data = dataForGetCourses(10);
@@ -503,21 +504,38 @@ describe('Get /courses', () => {
       expect(Course.findAll.mock.calls[0][2]).toBe('1');
     });
 
-    test('should make a call to findAll- with query and criteria and limit and offset', async () => {
+    test('should make a call to findAll with CategoryID - with query and criteria and limit and offset', async () => {
+      const data = dataForGetCourses(3, 1);
+      Course.findAll.mockResolvedValueOnce(data);
+      await request(app).get('/courses?categoryid=3&limit=100&offset=10');
+      expect(Course.findAll.mock.calls).toHaveLength(1);
+      expect(Course.findAll.mock.calls[0]).toHaveLength(3);
+      expect(Course.findAll.mock.calls[0][0]).toStrictEqual({
+        categoryid: '3'
+      });
+      expect(Course.findAll.mock.calls[0][1]).toBe('100');
+      expect(Course.findAll.mock.calls[0][2]).toBe('10');
+    });
+
+    test('should make a call to findAll with Credits- with query and criteria and limit and offset', async () => {
       const data = dataForGetCourses(3, 1);
       Course.findAll.mockResolvedValueOnce(data);
       await request(app).get('/courses?credits=3&limit=100&offset=10');
       expect(Course.findAll.mock.calls).toHaveLength(1);
       expect(Course.findAll.mock.calls[0]).toHaveLength(3);
-      expect(Course.findAll.mock.calls[0][0]).toStrictEqual({ credits: '3' });
+      expect(Course.findAll.mock.calls[0][0]).toStrictEqual({
+        credits: '3'
+      });
       expect(Course.findAll.mock.calls[0][1]).toBe('100');
       expect(Course.findAll.mock.calls[0][2]).toBe('10');
     });
 
-    test('should respond with a json array object containg the user data', async () => {
+    test('should respond with a json array object containing the user data', async () => {
       const data = dataForGetCourses(5);
       Course.findAll.mockResolvedValueOnce(data);
-      const { body: users } = await request(app).get('/courses');
+      const {
+        body: users
+      } = await request(app).get('/courses');
       expect(users).toHaveLength(data.length);
       for (let i = 0; i < data.length; i++) {
         expect(users[i].id).toBe(data[i].id);
@@ -527,7 +545,7 @@ describe('Get /courses', () => {
       }
     });
 
-    test('should respond with a json array object containg no data', async () => {
+    test('should respond with a json array object containing no data', async () => {
       Course.findAll.mockResolvedValueOnce([]);
       const response = await request(app).get('/courses');
       expect(response.body).toHaveLength(0);
