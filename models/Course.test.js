@@ -1,5 +1,7 @@
 const log = require('loglevel');
-const { db } = require('../services/database');
+const {
+  db
+} = require('../services/database');
 const Course = require('./Course');
 
 // const env = require('../services/environment');
@@ -7,6 +9,8 @@ const Course = require('./Course');
 beforeAll(() => {
   log.disableAll();
 });
+
+global.console.log = jest.fn()
 
 jest.mock('../services/database.js', () => {
   return {
@@ -79,14 +83,18 @@ describe('Course Model', () => {
     //       });
 
     test('No parameters', async () => {
-      db.query.mockResolvedValue({ rows: [] });
+      db.query.mockResolvedValue({
+        rows: []
+      });
       await expect(Course.deleteCourse()).rejects.toThrowError('Id is required.');
     });
 
     test('course delete no response returned', async () => {
       const data = dataForDeleteCourse(1);
       const row = data[0];
-      db.query.mockResolvedValue({ rows: [] });
+      db.query.mockResolvedValue({
+        rows: []
+      });
       await expect(Course.deleteCourse(row.id)).rejects.toThrowError(
         'Unexpected db condition, delete successful with no returned record'
       );
@@ -102,34 +110,91 @@ describe('Course Model', () => {
 
     test('Create course successfully', async () => {
       const row = createCourseData('fake course');
-      db.query.mockResolvedValueOnce({rows: []}).mockResolvedValue({rows: [row]});
+      db.query.mockResolvedValueOnce({
+        rows: []
+      }).mockResolvedValue({
+        rows: [row]
+      });
       await Course.createCourse('fake course', 4, 4);
       expect(db.query.mock.calls).toHaveLength(3);
     });
 
     test('Create course successfully but no response from database', async () => {
-      db.query.mockResolvedValue({rows: []});
+      db.query.mockResolvedValue({
+        rows: []
+      });
       await expect(Course.createCourse('fake course', 4, 4)).rejects.toThrowError('Inserted successfully, without response');
     });
 
     test('Create course unsuccessfully due to already existing course', async () => {
       const row = createCourseData('fake course');
-      db.query.mockResolvedValueOnce({rows: [row]});
+      db.query.mockResolvedValueOnce({
+        rows: [row]
+      });
       await expect(Course.createCourse('fake course', 4, 4)).rejects.toThrowError(`Course ${row.name} already exists in table "course"`);
     });
 
     test('Create course with semester successfully', async () => {
       const row = createCourseData('fake course');
-      const semester = {id: 1, type: 'spring', year: 2019};
+      const semester = {
+        id: 1,
+        type: 'spring',
+        year: 2019
+      };
       const returningRow = row;
       returningRow.type = semester.type;
       returningRow.year = semester.year;
-      const courseSemester = {semesterid: semester.id, courseid: row.id};
-      db.query.mockResolvedValueOnce({rows: []}).mockResolvedValueOnce({rows: [row]}).mockResolvedValueOnce({rows: [semester]}).mockResolvedValueOnce({rows: [courseSemester]}).mockResolvedValueOnce({rows: [returningRow]});
+      const courseSemester = {
+        semesterid: semester.id,
+        courseid: row.id
+      };
+      db.query.mockResolvedValueOnce({
+        rows: []
+      }).mockResolvedValueOnce({
+        rows: [row]
+      }).mockResolvedValueOnce({
+        rows: [semester]
+      }).mockResolvedValueOnce({
+        rows: [courseSemester]
+      }).mockResolvedValueOnce({
+        rows: [returningRow]
+      });
       await Course.createCourse(row.name, row.credits, row.section, semester.type, semester.year);
       expect(db.query.mock.calls).toHaveLength(5);
     });
+
+    test('Create course with without semester', async () => {
+      const row = createCourseData('fake course');
+      const semester = {
+        id: 1,
+        type: 'spring',
+        year: 2019
+      };
+      const returningRow = row;
+      returningRow.type = semester.type;
+      returningRow.year = semester.year;
+      const courseSemester = {
+        semesterid: semester.id,
+        courseid: row.id
+      };
+      db.query.mockResolvedValueOnce({
+        rows: []
+      }).mockResolvedValueOnce({
+        rows: [row]
+      }).mockResolvedValueOnce({
+        rows: []
+      }).mockResolvedValueOnce({
+        rows: [courseSemester]
+      }).mockResolvedValueOnce({
+        rows: [returningRow]
+      });
+      await Course.createCourse(row.name, row.credits, row.section, semester.type, semester.year);
+      expect(db.query.mock.calls).toHaveLength(4);
+
+    });
   });
+
+
 
 
   describe('Edit a Course', () => {
@@ -155,6 +220,29 @@ describe('Course Model', () => {
         `UPDATE "course" SET name = $1, section = $2, credits = $3 WHERE id = $4 RETURNING *;`
       );
     });
+
+    test('Edit a course to have new credits, courseId', async () => {
+      const data = dataForGetCourse(1);
+      const row = data[0];
+      row.name = "OldCourse"
+      row.credits = 4
+      const putDoc = {
+        credits: 4,
+        section: 5
+      };
+
+      db.query.mockResolvedValue({
+        rows: data
+      });
+
+      await Course.editCourse(row.id, putDoc);
+      expect(db.query.mock.calls).toHaveLength(2);
+      expect(db.query.mock.calls[0]).toHaveLength(2);
+      expect(db.query.mock.calls[0][0]).toBe(
+        `UPDATE "course" SET section = $1, credits = $2 WHERE id = $3 RETURNING *;`
+      );
+    });
+
 
     test('Throw 400 error for no input', async () => {
       const data = dataForGetCourse(1);
@@ -222,15 +310,30 @@ describe('Course Model', () => {
     test('Edit a course to have a new semester', async () => {
       const data = dataForGetCourse(1);
       const row = data[0];
-      const semester = {id: 1, type: 'spring', year: 2019};
-      const courseSemester = {semesterid: semester.id, courseid: row.id};
+      const semester = {
+        id: 1,
+        type: 'spring',
+        year: 2019
+      };
+      const courseSemester = {
+        semesterid: semester.id,
+        courseid: row.id
+      };
       const putDoc = {
         name: 'NewCourse',
         type: semester.type,
         year: semester.year
       }
 
-      db.query.mockResolvedValueOnce({rows: [semester]}).mockResolvedValueOnce({rows: [courseSemester]}).mockResolvedValueOnce({rows: [courseSemester]}).mockResolvedValue({rows: data});
+      db.query.mockResolvedValueOnce({
+        rows: [semester]
+      }).mockResolvedValueOnce({
+        rows: [courseSemester]
+      }).mockResolvedValueOnce({
+        rows: [courseSemester]
+      }).mockResolvedValue({
+        rows: data
+      });
 
       await Course.editCourse(row.id, putDoc);
       expect(db.query.mock.calls).toHaveLength(5);
@@ -254,15 +357,30 @@ describe('Course Model', () => {
     test('Edit a course to have a new semester when course semester does not exist', async () => {
       const data = dataForGetCourse(1);
       const row = data[0];
-      const semester = {id: 1, type: 'spring', year: 2019};
-      const courseSemester = {semesterid: semester.id, courseid: row.id};
+      const semester = {
+        id: 1,
+        type: 'spring',
+        year: 2019
+      };
+      const courseSemester = {
+        semesterid: semester.id,
+        courseid: row.id
+      };
       const putDoc = {
         name: 'NewCourse',
         type: semester.type,
         year: semester.year
       }
 
-      db.query.mockResolvedValueOnce({rows: [semester]}).mockResolvedValueOnce({rows: []}).mockResolvedValueOnce({rows: [courseSemester]}).mockResolvedValue({rows: data});
+      db.query.mockResolvedValueOnce({
+        rows: [semester]
+      }).mockResolvedValueOnce({
+        rows: []
+      }).mockResolvedValueOnce({
+        rows: [courseSemester]
+      }).mockResolvedValue({
+        rows: data
+      });
 
       await Course.editCourse(row.id, putDoc);
       expect(db.query.mock.calls).toHaveLength(5);
@@ -286,14 +404,26 @@ describe('Course Model', () => {
     test('Unexpected db condition when updating a course to have a new semester when course semester does not exist', async () => {
       const data = dataForGetCourse(1);
       const row = data[0];
-      const semester = {id: 1, type: 'spring', year: 2019};
+      const semester = {
+        id: 1,
+        type: 'spring',
+        year: 2019
+      };
       const putDoc = {
         name: 'NewCourse',
         type: semester.type,
         year: semester.year
       }
 
-      db.query.mockResolvedValueOnce({rows: [semester]}).mockResolvedValueOnce({rows: []}).mockResolvedValueOnce({rows: []}).mockResolvedValue({rows: data});
+      db.query.mockResolvedValueOnce({
+        rows: [semester]
+      }).mockResolvedValueOnce({
+        rows: []
+      }).mockResolvedValueOnce({
+        rows: []
+      }).mockResolvedValue({
+        rows: data
+      });
 
       await expect(Course.editCourse(row.id, putDoc)).rejects.toThrowError('Unexpected DB condition');
     });
@@ -301,14 +431,26 @@ describe('Course Model', () => {
     test('Unexpected db condition when update course semester', async () => {
       const data = dataForGetCourse(1);
       const row = data[0];
-      const semester = {id: 1, type: 'spring', year: 2019};
+      const semester = {
+        id: 1,
+        type: 'spring',
+        year: 2019
+      };
       const putDoc = {
         name: 'NewCourse',
         type: semester.type,
         year: semester.year
       }
 
-      db.query.mockResolvedValueOnce({rows: [semester]}).mockResolvedValueOnce({rows: [semester]}).mockResolvedValueOnce({rows: []}).mockResolvedValueOnce({rows: []});
+      db.query.mockResolvedValueOnce({
+        rows: [semester]
+      }).mockResolvedValueOnce({
+        rows: [semester]
+      }).mockResolvedValueOnce({
+        rows: []
+      }).mockResolvedValueOnce({
+        rows: []
+      });
 
       await expect(Course.editCourse(row.id, putDoc)).rejects.toThrowError('Unexpected DB condition');
     });
@@ -321,7 +463,11 @@ describe('Course Model', () => {
         year: 2019,
         type: 'spring'
       };
-      db.query.mockResolvedValue({rows: []}).mockResolvedValue({rows: []});
+      db.query.mockResolvedValue({
+        rows: []
+      }).mockResolvedValue({
+        rows: []
+      });
       await expect(Course.editCourse(row.id, putDoc)).rejects.toThrowError(`Semester with the specifications ${JSON.stringify({type: putDoc.type, year: putDoc.year})}`);
     });
 
@@ -391,7 +537,7 @@ describe('Course Model', () => {
     await expect(Course.editCourse(row.id, putDoc)).rejects.toThrowError('Unexpected DB condition');
   });
 
-}); 
+});
 
 describe('test deleteCourse', () => {
   test('course delete', async () => {
@@ -426,127 +572,141 @@ describe('querying all courses', () => {
     db.query.mockReset();
     db.query.mockResolvedValue(null);
   });
-  
-      test('should make a call to Course.findAll - no criteria, no limits, no offsets', async () => {
-        const data = dataForGetCourse(5);
-        db.query.mockResolvedValue({ rows: data });
-        const users = await Course.findAll();
-        expect(db.query.mock.calls).toHaveLength(1);
-        expect(db.query.mock.calls[0]).toHaveLength(2);
-        expect(db.query.mock.calls[0][0]).toBe(
-          'SELECT c.*, s.type, s.year, ca.prefix, ca.name AS "categoryName" from "course" AS c LEFT JOIN "courseSemester" AS cs ON cs.courseId = c.id LEFT JOIN "semester" AS s ON s.id = cs.semesterId LEFT JOIN "courseCategory" AS cc ON cc.courseId = c.id LEFT JOIN "category" AS ca ON ca.id = cc.categoryId  LIMIT $1 OFFSET $2;'
-          );
-        expect(db.query.mock.calls[0][1]).toHaveLength(2);
-        expect(db.query.mock.calls[0][1][0]).toBe(100);
-        expect(db.query.mock.calls[0][1][1]).toBe(0);
-        expect(users).toHaveLength(data.length);
-        for (let i = 0; i < data.length; i++) {
-          for (const key in Object.keys(data[i])) {
-            expect(users[i]).toHaveProperty(key, data[i][key]);
-          }
-        }
-      });
-  
-      test('should make a call to Course.findAll - with criteria, no limits, no offsets', async () => {
-        const data = dataForGetCourse(5);
-        db.query.mockResolvedValue({ rows: data });
-        const users = await Course.findAll({ credits: 3}, undefined);
-        expect(db.query.mock.calls).toHaveLength(1);
-        expect(db.query.mock.calls[0]).toHaveLength(2);
-        expect(db.query.mock.calls[0][0]).toBe(
-          'SELECT c.*, s.type, s.year, ca.prefix, ca.name AS "categoryName" from "course" AS c LEFT JOIN "courseSemester" AS cs ON cs.courseId = c.id LEFT JOIN "semester" AS s ON s.id = cs.semesterId LEFT JOIN "courseCategory" AS cc ON cc.courseId = c.id LEFT JOIN "category" AS ca ON ca.id = cc.categoryId WHERE c."credits"=$1 LIMIT $2 OFFSET $3;'
-        );
-        expect(db.query.mock.calls[0][1]).toHaveLength(3);
-        expect(db.query.mock.calls[0][1][0]).toBe(3);
-        expect(db.query.mock.calls[0][1][1]).toBe(100);
-        expect(db.query.mock.calls[0][1][2]).toBe(0);
-        expect(users).toHaveLength(data.length);
-        for (let i = 0; i < data.length; i++) {
-          for (const key in Object.keys(data[i])) {
-            expect(users[i]).toHaveProperty(key, data[i][key]);
-          }
-        }
-      });
-  
-      test('should make a call to Course.findAll - with criteria, with limits, no offsets', async () => {
-        const data = dataForGetCourse(3);
-        db.query.mockResolvedValue({ rows: data });
-        const courses = await Course.findAll({credits: 3}, 3);
-        expect(db.query.mock.calls).toHaveLength(1);
-        expect(db.query.mock.calls[0]).toHaveLength(2);
-        expect(db.query.mock.calls[0][0]).toBe(
-          'SELECT c.*, s.type, s.year, ca.prefix, ca.name AS "categoryName" from "course" AS c LEFT JOIN "courseSemester" AS cs ON cs.courseId = c.id LEFT JOIN "semester" AS s ON s.id = cs.semesterId LEFT JOIN "courseCategory" AS cc ON cc.courseId = c.id LEFT JOIN "category" AS ca ON ca.id = cc.categoryId WHERE c."credits"=$1 LIMIT $2 OFFSET $3;'
-        );
-        expect(db.query.mock.calls[0][1]).toHaveLength(3);
-        expect(db.query.mock.calls[0][1][0]).toBe(3);
-        expect(db.query.mock.calls[0][1][1]).toBe(3);
-        expect(db.query.mock.calls[0][1][2]).toBe(0);
-        expect(courses).toHaveLength(data.length);
-        for (let i = 0; i < data.length; i++) {
-          for (const key in Object.keys(data[i])) {
-            expect(courses[i]).toHaveProperty(key, data[i][key]);
-          }
-        }
-      });
-  
-      test('should make a call to Course.findAll - with criteria, with limits, with offsets', async () => {
-        const data = dataForGetCourse(3, 1);
-        db.query.mockResolvedValue({ rows: data });
-        const courses = await Course.findAll({credits: 3 }, 3, 1);
-        expect(db.query.mock.calls).toHaveLength(1);
-        expect(db.query.mock.calls[0]).toHaveLength(2);
-        expect(db.query.mock.calls[0][0]).toBe(
-          'SELECT c.*, s.type, s.year, ca.prefix, ca.name AS "categoryName" from "course" AS c LEFT JOIN "courseSemester" AS cs ON cs.courseId = c.id LEFT JOIN "semester" AS s ON s.id = cs.semesterId LEFT JOIN "courseCategory" AS cc ON cc.courseId = c.id LEFT JOIN "category" AS ca ON ca.id = cc.categoryId WHERE c."credits"=$1 LIMIT $2 OFFSET $3;'
-        );
-        expect(db.query.mock.calls[0][1]).toHaveLength(3);
-        expect(db.query.mock.calls[0][1][0]).toBe(3);
-        expect(db.query.mock.calls[0][1][1]).toBe(3);
-        expect(db.query.mock.calls[0][1][2]).toBe(1);
-        expect(courses).toHaveLength(data.length);
-        for (let i = 0; i < data.length; i++) {
-          for (const key in Object.keys(data[i])) {
-            expect(courses[i]).toHaveProperty(key, data[i][key]);
-          }
-        }
-      });
-  
-      test('should return null for database error', async () => {
-        db.query.mockRejectedValueOnce(new Error('a testing database error'));
-        await expect(Course.findAll()).rejects.toThrowError('a testing database error');
-      });
- });
 
- describe('querying on category id', () => {
+  test('should make a call to Course.findAll - no criteria, no limits, no offsets', async () => {
+    const data = dataForGetCourse(5);
+    db.query.mockResolvedValue({
+      rows: data
+    });
+    const users = await Course.findAll();
+    expect(db.query.mock.calls).toHaveLength(1);
+    expect(db.query.mock.calls[0]).toHaveLength(2);
+    expect(db.query.mock.calls[0][0]).toBe(
+      'SELECT c.*, s.type, s.year, ca.prefix, ca.name AS "categoryName" from "course" AS c LEFT JOIN "courseSemester" AS cs ON cs.courseId = c.id LEFT JOIN "semester" AS s ON s.id = cs.semesterId LEFT JOIN "courseCategory" AS cc ON cc.courseId = c.id LEFT JOIN "category" AS ca ON ca.id = cc.categoryId  LIMIT $1 OFFSET $2;'
+    );
+    expect(db.query.mock.calls[0][1]).toHaveLength(2);
+    expect(db.query.mock.calls[0][1][0]).toBe(100);
+    expect(db.query.mock.calls[0][1][1]).toBe(0);
+    expect(users).toHaveLength(data.length);
+    for (let i = 0; i < data.length; i++) {
+      for (const key in Object.keys(data[i])) {
+        expect(users[i]).toHaveProperty(key, data[i][key]);
+      }
+    }
+  });
+
+  test('should make a call to Course.findAll - with criteria, no limits, no offsets', async () => {
+    const data = dataForGetCourse(5);
+    db.query.mockResolvedValue({
+      rows: data
+    });
+    const users = await Course.findAll({
+      credits: 3
+    }, undefined);
+    expect(db.query.mock.calls).toHaveLength(1);
+    expect(db.query.mock.calls[0]).toHaveLength(2);
+    expect(db.query.mock.calls[0][0]).toBe(
+      'SELECT c.*, s.type, s.year, ca.prefix, ca.name AS "categoryName" from "course" AS c LEFT JOIN "courseSemester" AS cs ON cs.courseId = c.id LEFT JOIN "semester" AS s ON s.id = cs.semesterId LEFT JOIN "courseCategory" AS cc ON cc.courseId = c.id LEFT JOIN "category" AS ca ON ca.id = cc.categoryId WHERE c."credits"=$1 LIMIT $2 OFFSET $3;'
+    );
+    expect(db.query.mock.calls[0][1]).toHaveLength(3);
+    expect(db.query.mock.calls[0][1][0]).toBe(3);
+    expect(db.query.mock.calls[0][1][1]).toBe(100);
+    expect(db.query.mock.calls[0][1][2]).toBe(0);
+    expect(users).toHaveLength(data.length);
+    for (let i = 0; i < data.length; i++) {
+      for (const key in Object.keys(data[i])) {
+        expect(users[i]).toHaveProperty(key, data[i][key]);
+      }
+    }
+  });
+
+  test('should make a call to Course.findAll - with criteria, with limits, no offsets', async () => {
+    const data = dataForGetCourse(3);
+    db.query.mockResolvedValue({
+      rows: data
+    });
+    const courses = await Course.findAll({
+      credits: 3
+    }, 3);
+    expect(db.query.mock.calls).toHaveLength(1);
+    expect(db.query.mock.calls[0]).toHaveLength(2);
+    expect(db.query.mock.calls[0][0]).toBe(
+      'SELECT c.*, s.type, s.year, ca.prefix, ca.name AS "categoryName" from "course" AS c LEFT JOIN "courseSemester" AS cs ON cs.courseId = c.id LEFT JOIN "semester" AS s ON s.id = cs.semesterId LEFT JOIN "courseCategory" AS cc ON cc.courseId = c.id LEFT JOIN "category" AS ca ON ca.id = cc.categoryId WHERE c."credits"=$1 LIMIT $2 OFFSET $3;'
+    );
+    expect(db.query.mock.calls[0][1]).toHaveLength(3);
+    expect(db.query.mock.calls[0][1][0]).toBe(3);
+    expect(db.query.mock.calls[0][1][1]).toBe(3);
+    expect(db.query.mock.calls[0][1][2]).toBe(0);
+    expect(courses).toHaveLength(data.length);
+    for (let i = 0; i < data.length; i++) {
+      for (const key in Object.keys(data[i])) {
+        expect(courses[i]).toHaveProperty(key, data[i][key]);
+      }
+    }
+  });
+
+  test('should make a call to Course.findAll - with criteria, with limits, with offsets', async () => {
+    const data = dataForGetCourse(3, 1);
+    db.query.mockResolvedValue({
+      rows: data
+    });
+    const courses = await Course.findAll({
+      credits: 3
+    }, 3, 1);
+    expect(db.query.mock.calls).toHaveLength(1);
+    expect(db.query.mock.calls[0]).toHaveLength(2);
+    expect(db.query.mock.calls[0][0]).toBe(
+      'SELECT c.*, s.type, s.year, ca.prefix, ca.name AS "categoryName" from "course" AS c LEFT JOIN "courseSemester" AS cs ON cs.courseId = c.id LEFT JOIN "semester" AS s ON s.id = cs.semesterId LEFT JOIN "courseCategory" AS cc ON cc.courseId = c.id LEFT JOIN "category" AS ca ON ca.id = cc.categoryId WHERE c."credits"=$1 LIMIT $2 OFFSET $3;'
+    );
+    expect(db.query.mock.calls[0][1]).toHaveLength(3);
+    expect(db.query.mock.calls[0][1][0]).toBe(3);
+    expect(db.query.mock.calls[0][1][1]).toBe(3);
+    expect(db.query.mock.calls[0][1][2]).toBe(1);
+    expect(courses).toHaveLength(data.length);
+    for (let i = 0; i < data.length; i++) {
+      for (const key in Object.keys(data[i])) {
+        expect(courses[i]).toHaveProperty(key, data[i][key]);
+      }
+    }
+  });
+
+  test('should return null for database error', async () => {
+    db.query.mockRejectedValueOnce(new Error('a testing database error'));
+    await expect(Course.findAll()).rejects.toThrowError('a testing database error');
+  });
+});
+
+describe('querying on category id', () => {
   beforeEach(() => {
     db.query.mockReset();
     db.query.mockResolvedValue(null);
   });
 
-    test('Return {} when nothing is returned from query', async () => {
-        db.query.mockResolvedValue({
-          rows: []
-        });
-        const res = await Course.findCoursesInCategory('1');
-        const emp = {};
-        expect(res).toStrictEqual(emp);
-      });
-
-    test('Return rows when query is returned', async () => {
-        const rows = [{
-          "id": 1,
-          "section": 458,
-          "name": "computer science",
-          "credits": 4,
-          "courseid": 1,
-          "categoryid": 1,
-          "prefix": "CS"
-      }];
-
-      db.query.mockResolvedValue({
-        rows: rows
-      });
-      const res = await Course.findCoursesInCategory('1');
-
-      expect(res).toBe(rows);
+  test('Return {} when nothing is returned from query', async () => {
+    db.query.mockResolvedValue({
+      rows: []
     });
- });
+    const res = await Course.findCoursesInCategory('1');
+    const emp = {};
+    expect(res).toStrictEqual(emp);
+  });
+
+  test('Return rows when query is returned', async () => {
+    const rows = [{
+      "id": 1,
+      "section": 458,
+      "name": "computer science",
+      "credits": 4,
+      "courseid": 1,
+      "categoryid": 1,
+      "prefix": "CS"
+    }];
+
+    db.query.mockResolvedValue({
+      rows: rows
+    });
+    const res = await Course.findCoursesInCategory('1');
+
+    expect(res).toBe(rows);
+  });
+});
