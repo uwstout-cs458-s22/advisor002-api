@@ -26,6 +26,7 @@ jest.mock('../models/Semester.js', () => {
   return {
     findOne: jest.fn(),
     editSemester: jest.fn(),
+    createSemester: jest.fn(),
     deleteSemester: jest.fn()
   };
 });
@@ -366,4 +367,78 @@ describe('GET /semesters', () => {
       });
     });
   });
+
+  describe('POST /semesters', () => {
+    beforeEach(() => {
+      Semester.findOne.mockReset();
+      Semester.findOne.mockResolvedValue(null);
+      Semester.createSemester.mockReset();
+      Semester.createSemester.mockResolvedValue(null);
+      User.findOne.mockReset();
+      User.findOne.mockResolvedValue(null);
+    });
+  
+  test('Throw 403 error', async () => {
+    const data = dataForGetSemester(1);
+
+    const newSemester = data[0];
+    User.findOne.mockResolvedValueOnce({
+      id: 456,
+      email: 'fakeemail@gmail.com',
+      role: 'user',
+      enable: true,
+      userId: 'userId'
+    })
+
+    const response = await request(app).post(`/semesters`).send(
+      newSemester
+    );
+    expect(response.statusCode).toBe(403);
+  })
+
+  test('Throw 400 error', async () => {
+    const response = await request(app).post(`/semesters`).send({});
+    expect(response.statusCode).toBe(400);
+  })
+  test('Throw 500 error for extra errors', async () => {
+    const data = dataForGetSemester(1);
+    const row = data[0];
+    const resultSemesterParams = {
+      id: row.id,
+      year: 2000,
+      type: 'spring',
+    };
+
+    Semester.createSemester.mockRejectedValueOnce(new Error('Database Error'));
+    const response = await request(app).post(`/semesters`).send(resultSemesterParams);
+    expect(response.statusCode).toBe(500);
+  });
+
+  test('Return course ID in JSON', async () => {
+    const data = dataForGetSemester(10);
+    const row = data[0];
+
+    const resultSemesterParams = {
+      id: row.id,
+      year: 2000,
+      type: 'spring'
+    };
+
+    User.findOne.mockResolvedValueOnce({
+      id: 12,
+      email: 'fake@gmail.com',
+      role: 'director',
+      enable: true,
+      userId: 'userId',
+    });
+
+    Semester.createSemester.mockResolvedValueOnce(
+      resultSemesterParams
+    )
+
+    const response = await request(app).post('/semesters').send(resultSemesterParams);
+    
+    expect(response.statusCode).toBe(200);
+  });
+  })
 });
