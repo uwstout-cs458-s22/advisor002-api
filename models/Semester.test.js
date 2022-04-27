@@ -130,17 +130,22 @@ describe('Semester Model', () => {
 });
 
 describe('Creating a Semester', () => {
+  beforeEach(() => {
+    db.query.mockReset();
+    db.query.mockResolvedValue(null);
+  });
 
   test('Create semester with no input parameters', async () => {
-    await expect(Semester.createSemester()).rejects.toThrowError('id and year and type are required');
+    await expect(Semester.createSemester()).rejects.toThrowError('year and type are required');
     
   });
 
 
   test('Create  semester successfully', async () => {
-    const semester = {id: 1, type: 'spring', year: 2019};
-    await Semester.createSemester(semester.id, semester.year, semester.type);
-    expect(db.query.mock.calls).toHaveLength(2);
+    const semester = dataForGetSemester(1)
+    db.query.mockResolvedValueOnce({rows: []}).mockResolvedValue({rows: [semester]});
+    await Semester.createSemester(1, 'winter');
+    expect(db.query.mock.calls).toHaveLength(1);
   });
 });
 

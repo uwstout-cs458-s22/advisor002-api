@@ -103,7 +103,6 @@ module.exports = () => {
 
         try {
             const userId = res.locals.userId;
-            const courseid = req.body.id;
             const year = req.body.year;
             const type = req.body.type;
          
@@ -115,7 +114,7 @@ module.exports = () => {
             if (user.role === 'user') {
                 throw HttpError(403, `requester ${user.email} does not have permission to create a semester`);
             } else {
-                const semester = await Semester.createSemester(courseid,year, type);
+                const semester = await Semester.createSemester(year, type);
                 log.info(`${req.method} ${req.originalUrl} success: creating semester`);
                 return res.send(semester);
             }

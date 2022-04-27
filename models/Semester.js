@@ -9,10 +9,9 @@ const {
   insertValues
 } = require('../services/sqltools');
 
-async function createSemester(id,year, type) { 
-  if ( year && type && id) {
+async function createSemester(year, type) { 
+  if ( year && type) {
     const { text, params } = insertValues({
-      id: id,
       year: year,
       type: type
     });
@@ -25,7 +24,7 @@ async function createSemester(id,year, type) {
 
     return semester;
   } else {
-    throw HttpError(400,'id and year and type are required')
+    throw HttpError(400,'year and type are required')
   }
 
   
