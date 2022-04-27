@@ -97,7 +97,20 @@ describe('Semester Model', () => {
   });
 });
 
+describe('Creating a Semester', () => {
 
+  test('Create semester with no input parameters', async () => {
+    await expect(Semester.createSemester()).rejects.toThrowError('id and year and type are required');
+    
+  });
+
+
+  test('Create  semester successfully', async () => {
+    const semester = {id: 1, type: 'spring', year: 2019};
+    await Semester.createSemester(semester.id, semester.year, semester.type);
+    expect(db.query.mock.calls).toHaveLength(2);
+  });
+});
 
 
 describe('Edit a Semester', () => {

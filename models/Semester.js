@@ -5,10 +5,31 @@ const {
 } = require('../services/database');
 const {
   whereParams,
-  updateValues
+  updateValues,
+  insertValues
 } = require('../services/sqltools');
 
+async function createSemester(id,year, type) { 
+  if ( year && type && id) {
+    const { text, params } = insertValues({
+      id: id,
+      year: year,
+      type: type
+    });
 
+    const semester = await db.query(`INSERT INTO "semester" ${text} RETURNING*;`, params);
+
+    log.debug(
+      `Successfully created semester with data: ${text}, ${JSON.stringify(params)}`
+    );
+
+    return semester;
+  } else {
+    throw HttpError(400,'id and year and type are required')
+  }
+
+  
+}
 //  TEMP MADE FOR TESTING EDIT
 // if found return { ... }
 // if not found return {}
@@ -86,7 +107,9 @@ async function editSemester(id, resultSemester) {
 }
 
 
+
 module.exports = {
   findOne,
-  editSemester
+  editSemester,
+  createSemester
 };
