@@ -151,10 +151,10 @@ module.exports = () => {
     }
   })
 
-  router.delete('/', authorizeSession, async (req, res, next) => {
+  router.delete('/:id', authorizeSession, async (req, res, next) => {
     try {
-      const Id = req.body.id;
-      if (isEmpty(req.body) || !Id) {
+      const Id = req.params.id;
+      if (!Id) {
         throw new HttpError.BadRequest('Required parameters are missing');
       }
       if (res.locals.userId == null) {
@@ -166,7 +166,7 @@ module.exports = () => {
       if (!sender || isEmpty(sender)) {
         throw new HttpError.Forbidden('You are not allowed to do this');
       }
-      if (!(sender.role === 'director')) {
+      if (checkPermissions(sender.role) < 1) {
         throw new HttpError.Forbidden('You are not allowed to do this');
       }
       const course = await Course.findOne({

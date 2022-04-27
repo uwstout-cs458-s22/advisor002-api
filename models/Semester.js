@@ -51,6 +51,22 @@ async function findOne(criteria) {
   return {};
 }
 
+async function deleteSemester(id) {
+  if(id) {
+    const {text, params} = whereParams({id: id});
+
+    const delSemester = await db.query(`DELETE FROM "semester" ${text} RETURNING *;`, params);
+
+    if(delSemester.rows.length > 0) {
+      return 'Successfully deleted semester';
+    } else {
+      throw HttpError(500, 'Unexpected DB condition');
+    }
+  } else {
+    throw HttpError(400, 'Id is required to delete a semester');
+  }
+}
+
 
 // Edit given course's attributes
 // if successful update record in database, return row modified 'res'
@@ -111,5 +127,6 @@ async function editSemester(id, resultSemester) {
 module.exports = {
   findOne,
   editSemester,
-  createSemester
+  createSemester,
+  deleteSemester
 };

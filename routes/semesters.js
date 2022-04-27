@@ -31,8 +31,29 @@ module.exports = () => {
         }
     });
 
+    router.delete('/:id', authorizeSession, async (req, res, next) => {
+        try {
+            const id = req.params.id;
+            const userId = res.locals.userId;
 
+            const sender = await User.findOne({userId: userId});
 
+            if(checkPermissions(sender.role) < 1) {
+                throw new HttpError(403, 'You are not allowed to do this');
+            } else {
+                const semester = await Semester.findOne({id: id});
+
+                if(isEmpty(semester)) {
+                    throw new HttpError(404, `No course by id ${id} was found`);
+                }
+
+                await Semester.deleteSemester(id);
+                res.send();
+            }
+        } catch (err) {
+            next(err);
+        }
+    });
 
     router.put('/:id', authorizeSession, async (req, res, next) => {
         try {
