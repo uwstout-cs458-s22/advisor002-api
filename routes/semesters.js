@@ -31,6 +31,46 @@ module.exports = () => {
         }
     });
 
+    router.get('/', authorizeSession, async (req, res, next) => {
+        try {
+            const types = {
+                fall: 'fall',
+                winter: 'winter',
+                spring: 'spring',
+                summer: 'summer'
+            };
+            const userId = res.locals.userId;
+            const criteria = {};
+            const user = await User.findOne({ userId: userId });
+            if (req.query.id) {
+                criteria.id = req.query.id;
+            }
+
+            if (req.query.type) {
+                if(req.query.type !== types.fall && req.query.type !== types.winter && req.query.type !== types.spring && req.query.type !== types.summer) {
+                    throw HttpError(400, `Must be either ${types.fall}, ${types.winter}, ${types.spring}, ${types.summer}`);
+                }
+                criteria.type = req.query.type;
+            }
+
+            if (req.query.year) {
+                if(!parseInt(req.query.year)) {
+                    throw HttpError(400, 'Year must be a valid integer');
+                }
+                criteria.year = req.query.year;
+            }
+
+            if (user.role === 'user') {
+                throw HttpError(403, `requester ${user.email} does not have permission to view semesters`);
+            } else {
+                const semester = await Semester.findAll(criteria);
+                return res.send(semester);
+            }
+
+        } catch (error) {
+            next(error);
+        }
+    })
     router.delete('/:id', authorizeSession, async (req, res, next) => {
         try {
             const id = req.params.id;

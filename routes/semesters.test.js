@@ -25,6 +25,7 @@ function dataForGetSemester(rows, offset = 0) {
 jest.mock('../models/Semester.js', () => {
   return {
     findOne: jest.fn(),
+    findAll: jest.fn(),
     editSemester: jest.fn(),
     createSemester: jest.fn(),
     deleteSemester: jest.fn()

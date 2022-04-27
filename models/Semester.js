@@ -50,6 +50,18 @@ async function findOne(criteria) {
   return {};
 }
 
+
+async function findAll (criteria, query=null, limit = 100, offset = 0) {
+    const {text, params } = whereParams(criteria, query);
+    const n = params.length;
+    const p = params.concat([limit, offset]);
+    const res = await db.query(`SELECT * FROM "semester" ${text} LIMIT $${n + 1} OFFSET $${n + 2};`, p);
+    log.debug(
+      `Retrieved ${res.rows.length} semesters from db with criteria: ${text}, ${JSON.stringify(params)}`
+    );
+      return res.rows;
+}
+
 async function deleteSemester(id) {
   if(id) {
     const {text, params} = whereParams({id: id});
@@ -127,5 +139,6 @@ module.exports = {
   findOne,
   editSemester,
   createSemester,
-  deleteSemester
+  deleteSemester,
+  findAll
 };
