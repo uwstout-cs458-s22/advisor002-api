@@ -18,6 +18,8 @@ module.exports = () => {
   router.use('/categories', categoriesRoutes);
   const semestersRoutes = require('./semesters')();
   router.use('/semesters', semestersRoutes);
+  const userCourseRoutes = require('./userCourse')();
+  router.use('/userCourse', userCourseRoutes);
   router.get('/health', (req, res) => {
     const uptime = process.uptime();
     const data = {
