@@ -1,42 +1,62 @@
 const HttpError = require('http-errors');
 const log = require('loglevel');
-const { db } = require('../services/database');
-const { insertValues, whereParams, updateValues, whereParamsCourses } = require('../services/sqltools');
+const {
+  db
+} = require('../services/database');
+const {
+  insertValues,
+  whereParams,
+  updateValues,
+  whereParamsCourses
+} = require('../services/sqltools');
 
 // Name, credits, and section are required
 async function createCourse(name, credits, section, type, year) {
-  if ( name && section && credits) {
-    const { text, params } = insertValues({
+  if (name && section && credits) {
+    const {
+      text,
+      params
+    } = insertValues({
       name: name,
       credits: credits,
       section: section
     });
 
 
-    const keyLength = Object.keys(await findOne({name: name, section: section})).length;
+    const keyLength = Object.keys(await findOne({
+      name: name,
+      section: section
+    })).length;
 
     if (keyLength === 0) {
       const res = await db.query(`INSERT INTO "course" ${text} RETURNING *;`, params);
 
       if (res.rows.length > 0) {
 
-        if(type && year) {
-          const {text, params} = whereParams({
+        if (type && year) {
+          const {
+            text,
+            params
+          } = whereParams({
             type: type,
             year: year
           });
 
           const semester = await db.query(`SELECT * FROM "semester" ${text}`, params);
 
-          if(semester.rows.length > 0) {
-            const {text, params} = insertValues({
+          if (semester.rows.length > 0) {
+            const {
+              text,
+              params
+            } = insertValues({
               courseid: res.rows[0].id,
               semesterid: semester.rows[0].id
             });
 
             await db.query(`INSERT INTO "courseSemester" ${text} RETURNING *;`, params);
           } else {
-            log.error(`No semester with the provided information type: ${type}, year: ${year}. Creating course but not creating semester relation.`);
+            // log.error(`No semester with the provided information type: ${type}, year: ${year}. Creating course but not creating semester relation.`);
+            console.log(`No semester with the provided information type: ${type}, year: ${year}. Creating course but not creating semester relation.`);
           }
         }
 
@@ -46,7 +66,9 @@ async function createCourse(name, credits, section, type, year) {
           )}`
         );
 
-        return await findOne({id: res.rows[0].id});
+        return await findOne({
+          id: res.rows[0].id
+        });
       }
       throw HttpError(500, 'Inserted successfully, without response');
     } else {
@@ -84,14 +106,17 @@ async function deleteCourse(Id) {
 // if db error, db.query will throw a rejected promise
 async function findOne(criteria) {
   // Use the course whereParams function to setup a prepared statement
-  const { text, params } = whereParamsCourses(criteria);
+  const {
+    text,
+    params
+  } = whereParamsCourses(criteria);
   // Setup prepared statement to send to server with the variables
   const res = await db.query(`SELECT c.*, s.type, s.year, ca.prefix, ca.name AS "categoryName" from "course" AS c ` +
-                                `LEFT JOIN "courseSemester" AS cs ON cs.courseId = c.id ` +
-                                `LEFT JOIN "semester" AS s ON s.id = cs.semesterId ` +
-                                `LEFT JOIN "courseCategory" AS cc ON cc.courseId = c.id ` +
-                                `LEFT JOIN "category" AS ca ON ca.id = cc.categoryId ` +
-                              `${text};`, params);
+    `LEFT JOIN "courseSemester" AS cs ON cs.courseId = c.id ` +
+    `LEFT JOIN "semester" AS s ON s.id = cs.semesterId ` +
+    `LEFT JOIN "courseCategory" AS cc ON cc.courseId = c.id ` +
+    `LEFT JOIN "category" AS ca ON ca.id = cc.categoryId ` +
+    `${text};`, params);
 
   // If the result count is more than 0 than return the results gathered from the database
   if (res.rows.length > 0) {
@@ -107,22 +132,25 @@ async function findOne(criteria) {
 // Find all courses matching given criteria
 async function findAll(criteria, limit = 100, offset = 0) {
   // Use the course whereParams function to setup a prepared statement
-  const { text, params } = whereParamsCourses(criteria);
+  const {
+    text,
+    params
+  } = whereParamsCourses(criteria);
   // Calculate offset and limit position based on length of params
   // and add them to the list of params for prepared statement
   const n = params.length;
   const p = params.concat([limit, offset])
   // Setup query and add variables for prepared statement and send it
   const res = await db.query(`SELECT c.*, s.type, s.year, ca.prefix, ca.name AS "categoryName" from "course" AS c ` +
-                                `LEFT JOIN "courseSemester" AS cs ON cs.courseId = c.id ` +
-                                `LEFT JOIN "semester" AS s ON s.id = cs.semesterId ` +
-                                `LEFT JOIN "courseCategory" AS cc ON cc.courseId = c.id ` +
-                                `LEFT JOIN "category" AS ca ON ca.id = cc.categoryId ` +
-                              `${text} LIMIT $${n + 1} OFFSET $${n + 2};`, p);
+    `LEFT JOIN "courseSemester" AS cs ON cs.courseId = c.id ` +
+    `LEFT JOIN "semester" AS s ON s.id = cs.semesterId ` +
+    `LEFT JOIN "courseCategory" AS cc ON cc.courseId = c.id ` +
+    `LEFT JOIN "category" AS ca ON ca.id = cc.categoryId ` +
+    `${text} LIMIT $${n + 1} OFFSET $${n + 2};`, p);
   log.debug(
     `Retrieved ${res.rows.length} courses from db with criteria ${text}, ${JSON.stringify(params)}`
   )
-  
+
   // Return the results
   return res.rows;
 }
@@ -132,15 +160,15 @@ async function findAll(criteria, limit = 100, offset = 0) {
 // if not found return {}
 async function findCoursesInCategory(categoryid) {
   // Query for all courses that are in the category with the id given
-  const res = await  db.query(`SELECT * FROM course ` +
-  `LEFT JOIN "courseCategory" ON "courseCategory".courseid = "course".id ` +
-  `LEFT JOIN "category" ON "category".id = "courseCategory".categoryid WHERE category.id = ${categoryid}`);
+  const res = await db.query(`SELECT * FROM course ` +
+    `LEFT JOIN "courseCategory" ON "courseCategory".courseid = "course".id ` +
+    `LEFT JOIN "category" ON "category".id = "courseCategory".categoryid WHERE category.id = ${categoryid}`);
 
-  if(res.rows.length > 0){
+  if (res.rows.length > 0) {
     log.debug(`Retrieved ${res.rows.length} courses from db with category id ${categoryid}`);
     // Return the results
     return res.rows;
-  } 
+  }
 
   log.debug(`Could not find courses in category with id: ${categoryid}`);
   return {};
@@ -196,35 +224,57 @@ async function editCourse(id, resultCourse) {
     }
 
     // If wanting to change the semester type/year
-    if(resultCourse.year && resultCourse.type) {
-      const {text, params} = whereParams({type: resultCourse.type, year: resultCourse.year});
+    if (resultCourse.year && resultCourse.type) {
+      const {
+        text,
+        params
+      } = whereParams({
+        type: resultCourse.type,
+        year: resultCourse.year
+      });
 
       const newSemester = await db.query(`SELECT * FROM "semester" ${text};`, params);
 
-      if(newSemester.rows[0]) {
-        const {text, params} = whereParams({courseid: id});
+      if (newSemester.rows[0]) {
+        const {
+          text,
+          params
+        } = whereParams({
+          courseid: id
+        });
 
         const courseSemester = await db.query(`SELECT * FROM "courseSemester" ${text};`, params);
 
-        if(courseSemester.rows[0]) {
-          const {text, params} = updateValues({semesterId: newSemester.rows[0].id});
+        if (courseSemester.rows[0]) {
+          const {
+            text,
+            params
+          } = updateValues({
+            semesterId: newSemester.rows[0].id
+          });
           const n = params.length;
           params.push(parseInt(id));
-  
+
           const resSemester = await db.query(`UPDATE "courseSemester" ${text} WHERE courseid = $${n+1} RETURNING *;`, params);
-  
-          if(resSemester.rows.length === 0) {
+
+          if (resSemester.rows.length === 0) {
             log.debug(`Problem updating course semester with id ${id} in the database with the data ${JSON.stringify(resultCourse)}`);
             throw HttpError(500, 'Unexpected DB condition');
           }
 
           changeFlag = true;
         } else {
-          const {text, params} = insertValues({courseid: id, semesterid: newSemester.rows[0].id});
+          const {
+            text,
+            params
+          } = insertValues({
+            courseid: id,
+            semesterid: newSemester.rows[0].id
+          });
 
           const resSemester = await db.query(`INSERT INTO "courseSemester" ${text} RETURNING *;`, params);
 
-          if(resSemester.rows.length === 0) {
+          if (resSemester.rows.length === 0) {
             log.debug(`Problem updating course semester with id ${id} in the database with the data ${JSON.stringify(resultCourse)}`);
             throw HttpError(500, 'Unexpected DB condition');
           }
@@ -274,7 +324,7 @@ async function editCourse(id, resultCourse) {
         // Return all course info AND category prefix
         const result = await db.query(`SELECT c.id, c.name, c.credits, c.section, ca.prefix FROM "course" AS c ` +
           `INNER JOIN "courseCategory" AS cc ON cc.courseid = c.id ` +
-          `INNER JOIN "category" AS ca ON ca.id = cc.categoryid ` + 
+          `INNER JOIN "category" AS ca ON ca.id = cc.categoryid ` +
           `INNER JOIN "courseSemester" AS cs ON cs.courseId = c.id ` +
           `INNER JOIN "semester" AS s ON s.id = cs.semesterId ` +
           `WHERE c.id = ${id} LIMIT 1;`);
@@ -288,11 +338,11 @@ async function editCourse(id, resultCourse) {
     if (changeFlag) {
       // Return all data about course (we already sent the category in)
       const res = await db.query(`SELECT c.*, s.type, s.year, ca.prefix, ca.name AS "categoryName" from "course" AS c ` +
-      `LEFT JOIN "courseSemester" AS cs ON cs.courseId = c.id ` +
-      `LEFT JOIN "semester" AS s ON s.id = cs.semesterId ` +
-      `LEFT JOIN "courseCategory" AS cc ON cc.courseId = c.id ` +
-      `LEFT JOIN "category" AS ca ON ca.id = cc.categoryId ` +
-    `WHERE c.id = ${id} LIMIT 1;`);
+        `LEFT JOIN "courseSemester" AS cs ON cs.courseId = c.id ` +
+        `LEFT JOIN "semester" AS s ON s.id = cs.semesterId ` +
+        `LEFT JOIN "courseCategory" AS cc ON cc.courseId = c.id ` +
+        `LEFT JOIN "category" AS ca ON ca.id = cc.categoryId ` +
+        `WHERE c.id = ${id} LIMIT 1;`);
       return res.rows[0];
 
     } else {
