@@ -12,6 +12,13 @@ const { isEmpty } = require('./../services/utils');
 module.exports = () => {
   const router = express.Router();
 
+  // create userCourse
+  // requirements:
+  // userId, courseId, semesterId
+  // optional:
+  // taken
+  // body json:
+  // [  { "userId",  "courseId",  "semesterId",  "taken" }  ]
   router.post('/', authorizeSession, async (req, res, next) => {
     try {
       if (isEmpty(req.body) || isEmpty(req.body[0])) {
@@ -48,6 +55,11 @@ module.exports = () => {
     }
   });
 
+  // edit userCourse
+  // requirements:
+  // userId, courseId, semesterId, taken
+  // body json:
+  // [  { "userId",  "courseId",  "semesterId", "taken" }  ]
   router.put('/', authorizeSession, async (req, res, next) => {
     try {
       if (isEmpty(req.body) || isEmpty(req.body[0])) {
@@ -84,6 +96,11 @@ module.exports = () => {
     }
   });
 
+  // delete userCourse
+  // requirements:
+  // userId, courseId, semesterId
+  // body json:
+  // [  { "userId",  "courseId",  "semesterId" }  ]
   router.delete('/', authorizeSession, async (req, res, next) => {
     try {
       if (!req.body || isEmpty(req.body) || isEmpty(req.body[0])) {
@@ -119,6 +136,11 @@ module.exports = () => {
     }
   });
 
+  // get userCourse
+  // requirements:
+  // userId, courseId, semesterId
+  // body json:
+  // [  { "userId",  "courseId",  "semesterId" }  ]
   router.get('/', authorizeSession, async (req, res, next) => {
     try {
       if (!req.body || isEmpty(req.body) || isEmpty(req.body[0])) {
@@ -140,6 +162,7 @@ module.exports = () => {
       if (!(currentUserId === userId || checkPermissions(currentUser.role) >= 1)) {
         throw new HttpError.Forbidden('You are not allowed to do this');
       }
+      // get and return course
       const userCourseGotten = await UserCourse.findOne({ userid : userId, courseid: courseId, semesterid: semesterId })
       if (!userCourseGotten || isEmpty(userCourseGotten)) {
         throw new HttpError.NotFound('No course found');

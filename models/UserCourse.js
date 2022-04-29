@@ -2,6 +2,7 @@ const HttpError = require('http-errors');
 const { db } = require('../services/database');
 const { insertValues, whereParams } = require('../services/sqltools');
 
+// gets a userCourse in the database. Returns the userCourse
 async function findOne(criteria) {
   const { text, params } = whereParams(criteria);
   const res = await db.query(`SELECT * from "userCourse" ${text} LIMIT 1;`, params);
@@ -10,6 +11,8 @@ async function findOne(criteria) {
   }
 }
 
+// creates a userCourse in the database. Returns result
+// taken is optional, will default to false
 async function createUserCourse(userId, courseId, semesterId, taken) {
   taken = taken || false
   const { text, params } = insertValues({ userid: userId, courseid: courseId, semesterid: semesterId,  taken: taken });
@@ -20,6 +23,7 @@ async function createUserCourse(userId, courseId, semesterId, taken) {
   throw HttpError(500, 'Unexpected db condition, insert successful with no returned record');
 }
 
+// deletes a userCourse in the database. Returns string
 async function deleteUserCourse(userId, courseId, semesterId) {
   const { text, params } = whereParams({ userid: userId, courseid: courseId, semesterid: semesterId });
   const res = await db.query(`DELETE FROM "userCourse" ${text} RETURNING *;`, params);
@@ -29,6 +33,7 @@ async function deleteUserCourse(userId, courseId, semesterId) {
   throw HttpError(500, 'Unexpected db condition, delete successful with no returned record');
 }
 
+// edits a user course in the database. Taken is required
 async function editUserCourse(userId, courseId, semesterId, taken) {
   if (!findOne({ userid: userId, courseid: courseId, semesterid: semesterId })) {
     throw HttpError(400, `UserCourse not found`);
