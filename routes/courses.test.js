@@ -22,6 +22,20 @@ function dataForGetCourses(rows, offset = 0) {
   return data;
 }
 
+function dataforGetCategory(rows, offset = 0) {
+  const data = [];
+  for (let i = 1; i <= rows; i++) {
+    const value = i + offset;
+    data.push({
+      userId: `userId-${value}`,
+      id: value,
+      name: `Category-${value}`,
+      prefix: `prefix-${value}`,
+    });
+  }
+  return data;
+}
+
 jest.mock('../models/Course.js', () => {
   return {
     findOne: jest.fn(),
@@ -30,6 +44,8 @@ jest.mock('../models/Course.js', () => {
     editCourse: jest.fn(),
     deleteCourse: jest.fn(),
     findCoursesInCategory: jest.fn(),
+    createCategory: jest.fn(),
+    findOneCategory: jest.fn(),
   };
 });
 
@@ -602,6 +618,53 @@ describe('Get /courses', () => {
       });
       expect(Course.findAll.mock.calls[0][1]).toBeUndefined();
       expect(Course.findAll.mock.calls[0][2]).toBeUndefined();
+    });
+  });
+
+  describe('Post /category', () => {
+    beforeEach(() => {
+      Course.findOne.mockReset();
+      Course.findOne.mockResolvedValue(null);
+      Course.createCourse.mockReset();
+      Course.createCourse.mockResolvedValue(null);
+      Course.findOneCategory.mockReset();
+      Course.findOneCategory.mockResolvedValue(null);
+      Course.createCategory.mockReset();
+      Course.createCategory.mockResolvedValue(null);
+    });
+
+    describe('Create a category', () => {
+      test('Should respond with 200 with, id, name, and prefix', async () => {
+        const data = dataforGetCategory(3);
+        for (let i = 0; i < data.length; i++) {
+          const row = data[i];
+          const requestParams = {
+            userId: row.userId,
+            id: row.id,
+            name: row.name,
+            prefix: row.prefix,
+          };
+          Course.findOneCategory.mockResolvedValueOnce({});
+          Course.createCategory.mockResolvedValueOnce(row);
+          await request(app).post('/courses/category/').send(requestParams);
+
+          // expect(Course.findOneCategory.mock.calls).toHaveLength(i + 1);
+          // expect(Course.findOneCategory.mock.calls[i]).toHaveLength(1);
+          // expect(Course.findOneCategory.mock.calls[i][0]).toHaveProperty('userId', row.userId);
+          // expect(Course.createCategory.mock.calls).toHaveLength(i + 1);
+          // expect(Course.createCategory.mock.calls[i]).toHaveLength(2);
+          expect(Course.createCategory.mock.calls[i][0]).toBe(row.userId);
+          expect(Course.createCategory.mock.calls[i][1]).toBe(row.id);
+          expect(Course.createCategory.mock.calls[i][2]).toBe(row.name);
+          expect(Course.createCategory.mock.calls[i][3]).toBe(row.prefix);
+
+          /* expect(response.statusCode).toBe(200);
+          expect(response.body.userId).toBe(data.userId);
+          expect(response.body.id).toBe(data.id);
+          expect(response.body.name).toBe(data.name);
+          expect(response.body.prefix).toBe(data.prefix); */
+        }
+      });
     });
   });
 });
