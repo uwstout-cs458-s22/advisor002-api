@@ -26,3 +26,5 @@ Every request received by the API must also be accompanied with the Stytch sessi
 [/courses POST](courses_post.md)
 
 [/courses DELETE](courses_delete.md)
+
+[/semesters DELETE](semester_delete.md)
