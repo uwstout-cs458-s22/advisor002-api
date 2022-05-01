@@ -194,34 +194,5 @@ module.exports = () => {
     }
   });
 
-  // needs the id of the user making the request for authorization
-  router.post('/category/', authorizeSession, async (req, res, next) => {
-    try {
-      const userId = req.body.userId;
-      const id = req.body.id;
-      const name = req.body.name;
-      const prefix = req.body.prefix;
-
-      if (!userId || !id || !name || !prefix) {
-        throw HttpError(400, 'Required Parameters Missing');
-      }
-      const user = await User.findOne({ userId: userId });
-      if (user.role !== 'director') {
-        throw HttpError(
-          403,
-          `requester ${user.email} does not have permissions to create a category`
-        );
-      } else {
-        const category = await Course.createCategory(id, name, prefix);
-        res.status(201); // otherwise
-        res.setHeader('Location', `/courses/category/${name}`);
-        log.info(`${req.method} ${req.originalUrl} success: returning category ${name}}`);
-        return res.send(category);
-      }
-    } catch (error) {
-      next(error);
-    }
-  });
-
   return router;
 };

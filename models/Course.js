@@ -246,49 +246,6 @@ async function editCourse(id, resultCourse) {
   }
 }
 
-async function findOneCategory(criteria) {
-  const { text, params } = whereParams(criteria);
-
-  const res = await db.query(`SELECT * from "category" ${text} LIMIT 1;`, params);
-
-  if (res.rows.length > 0) {
-    log.debug(
-      `Successfully found category from db with criteria: ${text}, ${JSON.stringify(params)}`
-    );
-    return res.rows[0];
-  }
-  log.debug(`No users found in db with criteria: ${text}, ${JSON.stringify(params)}`);
-  return {};
-}
-
-async function createCategory(id, name, prefix) {
-  if (id && name && prefix) {
-    const { text, params } = insertValues({
-      id: id,
-      name: name,
-      prefix: prefix,
-    });
-
-    if (findOneCategory({ id: id }) !== {}) {
-      const res = await db.query(`INSERT INTO "category" ${text} RETURNING *;`, params);
-      if (res.rows.length > 0) {
-        log.debug(
-          `successfully inserted category ${name} into category table with data: ${text}, ${JSON.stringify(
-            params
-          )}`
-        );
-
-        return res.rows[0];
-      }
-      throw HttpError(500, 'Inserted successfully, without response');
-    } else {
-      throw HttpError(500, `Category ${name} already exists in table "category"`);
-    }
-  } else {
-    throw HttpError(400, 'Category id, name, and prefix are required');
-  }
-}
-
 module.exports = {
   createCourse,
   deleteCourse,
@@ -296,6 +253,4 @@ module.exports = {
   findAll,
   findCoursesInCategory,
   editCourse,
-  findOneCategory,
-  createCategory,
 };
