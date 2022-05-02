@@ -288,49 +288,90 @@ describe('GET /categories', () => {
       });
     });
   });
+});
 
-  describe('Post /category', () => {
+describe('Post /category', () => {
+  describe('Create a category', () => {
     beforeEach(() => {
-      Category.findOne.mockReset();
-      Category.findOne.mockResolvedValue(null);
       Category.findOne.mockReset();
       Category.findOne.mockResolvedValue(null);
       Category.createCategory.mockReset();
       Category.createCategory.mockResolvedValue(null);
+      User.findOne.mockReset();
+      User.findOne.mockResolvedValue(null);
+    });
+    test('Should call Category.create', async () => {
+      const data = dataForGetCategory(3);
+      for (let i = 0; i < data.length; i++) {
+        const row = data[i];
+        const requestParams = {
+          name: row.name,
+          prefix: row.prefix,
+        };
+
+        User.findOne.mockResolvedValue({ id: 6, email: 'something@uwstout.edu', role: 'director' });
+        Category.createCategory.mockResolvedValueOnce(row);
+        await request(app).post('/categories').send(requestParams);
+
+        expect(Category.createCategory.mock.calls).toHaveLength(i + 1);
+        expect(Category.createCategory.mock.calls[i]).toHaveLength(2);
+        expect(Category.createCategory.mock.calls[i][0]).toBe(row.name);
+        expect(Category.createCategory.mock.calls[i][1]).toBe(row.prefix);
+      }
     });
 
-    describe('Create a category', () => {
-      test('Should respond with 200 with, id, name, and prefix', async () => {
-        const data = dataForGetCategory(3);
-        for (let i = 0; i < data.length; i++) {
-          const row = data[i];
-          const requestParams = {
-            userId: row.userId,
-            id: row.id,
-            name: row.name,
-            prefix: row.prefix,
-          };
-          Category.findOne.mockResolvedValueOnce({});
-          Category.createCategory.mockResolvedValueOnce(row);
-          await request(app).post('/category/').send(requestParams);
+    test('Should respond with 201 if category is created', async () => {
+      const data = dataForGetCategory(3);
+      for (let i = 0; i < data.length; i++) {
+        const row = data[i];
+        const requestParams = {
+          name: row.name,
+          prefix: row.prefix,
+        };
 
-          // expect(Category.findOneCategory.mock.calls).toHaveLength(i + 1);
-          // expect(Category.findOneCategory.mock.calls[i]).toHaveLength(1);
-          // expect(Category.findOneCategory.mock.calls[i][0]).toHaveProperty('userId', row.userId);
-          // expect(Category.createCategory.mock.calls).toHaveLength(i + 1);
-          // expect(Category.createCategory.mock.calls[i]).toHaveLength(2);
-          expect(Category.createCategory.mock.calls[i][0]).toBe(row.userId);
-          expect(Category.createCategory.mock.calls[i][1]).toBe(row.id);
-          expect(Category.createCategory.mock.calls[i][2]).toBe(row.name);
-          expect(Category.createCategory.mock.calls[i][3]).toBe(row.prefix);
+        User.findOne.mockResolvedValue({ id: 6, email: 'something@uwstout.edu', role: 'director' });
+        Category.createCategory.mockResolvedValueOnce(row);
+        const response = await request(app).post('/categories').send(requestParams);
 
-          /* expect(response.statusCode).toBe(200);
-          expect(response.body.userId).toBe(data.userId);
-          expect(response.body.id).toBe(data.id);
-          expect(response.body.name).toBe(data.name);
-          expect(response.body.prefix).toBe(data.prefix); */
-        }
-      });
+        expect(response.statusCode).toBe(201);
+        expect(response.body.name).toBe(row.name);
+        expect(response.body.prefix).toBe(row.prefix);
+      }
+    });
+
+    test('Should throw 400 if missing parameters', async () => {
+      const data = dataForGetCategory(1);
+      for (let i = 0; i < data.length; i++) {
+        const row = data[i];
+        // missing name
+        const requestParams = {
+          prefix: row.prefix,
+        };
+
+        User.findOne.mockResolvedValue({ id: 6, email: 'something@uwstout.edu', role: 'director' });
+        Category.createCategory.mockResolvedValueOnce(row);
+        const response = await request(app).post('/categories').send(requestParams);
+
+        expect(response.statusCode).toBe(400);
+      }
+    });
+
+    test('Should throw 403 if missing parametersuser does not have permissions to create a category', async () => {
+      const data = dataForGetCategory(1);
+      for (let i = 0; i < data.length; i++) {
+        const row = data[i];
+        // missing name
+        const requestParams = {
+          name: row.name,
+          prefix: row.prefix,
+        };
+
+        User.findOne.mockResolvedValue({ id: 6, email: 'something@uwstout.edu', role: 'user' });
+        Category.createCategory.mockResolvedValueOnce(row);
+        const response = await request(app).post('/categories').send(requestParams);
+
+        expect(response.statusCode).toBe(403);
+      }
     });
   });
 });
