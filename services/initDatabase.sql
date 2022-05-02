@@ -70,7 +70,8 @@ ALTER TABLE "course" DROP COLUMN IF EXISTS "courseId";
 ALTER TABLE "course" ADD COLUMN IF NOT EXISTS "section" text;
 ALTER TABLE "semester" ADD COLUMN IF NOT EXISTS "year" integer;
 ALTER TABLE "semester" DROP COLUMN IF EXISTS "name";
-ALTER TABLE "semester" ADD COLUMN IF NOT EXISTS type text CHECK (type IN ('winter', 'spring', 'summer', 'fall'));
+ALTER TABLE "semester" ADD COLUMN IF NOT EXISTS "type" text CHECK (type IN ('winter', 'spring', 'summer', 'fall'));
+
 -- Run to quickly remove all tables for testing.
 -- DROP TABLE IF EXISTS "semester" cascade;
 -- DROP TABLE IF EXISTS "course" cascade;

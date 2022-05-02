@@ -139,19 +139,19 @@ describe('GET /categories', () => {
 
         const newCategoryParams = {
           name: 'TestClass',
-          prefix: 'TC',
+          prefix: 'TC'
         };
 
         const resultCategoryParams = {
           id: row.id,
           name: 'TestClass',
-          prefix: 'TC',
+          prefix: 'TC'
         };
 
         Category.findOne.mockResolvedValueOnce({
           id: row.id,
           name: row.name,
-          prefix: row.prefix,
+          prefix: row.prefix
         });
         User.findOne.mockResolvedValueOnce({
           id: 456,
@@ -175,19 +175,19 @@ describe('GET /categories', () => {
 
         const newCategoryParams = {
           name: 'TestClass',
-          prefix: 'TC',
+          prefix: 'TC'
         };
 
         const resultCategoryParams = {
           id: row.id,
           name: 'TestClass',
-          prefix: 'TC',
+          prefix: 'TC'
         };
 
         Category.findOne.mockResolvedValueOnce({
           id: row.id,
           name: row.name,
-          prefix: row.prefix,
+          prefix: row.prefix
         });
         User.findOne.mockResolvedValueOnce({
           id: 456,
@@ -201,9 +201,9 @@ describe('GET /categories', () => {
           resultCategoryParams,
         });
 
-        const { body: course } = await request(app)
-          .put(`/categories/${row.id}`)
-          .send(newCategoryParams);
+        const {
+          body: course
+        } = await request(app).put(`/categories/${row.id}`).send(newCategoryParams);
         expect(course.id).toBe(newCategoryParams.id);
       });
 
@@ -266,12 +266,12 @@ describe('GET /categories', () => {
 
         const newCategoryParams = {
           name: 'TestClass',
-          prefix: 'TC',
+          prefix: 'TC'
         };
 
         Category.findOne.mockResolvedValueOnce({
           name: 'TestClass',
-          prefix: 'TC',
+          prefix: 'TC'
         });
         User.findOne.mockResolvedValueOnce({
           id: 456,
