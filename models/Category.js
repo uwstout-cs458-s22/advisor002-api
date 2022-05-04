@@ -69,6 +69,7 @@ async function editCategory(id, resultCategory) {
   }
 }
 
+// creates a new entry in courseCategory from a course and category id
 async function addCourseToCategory(course, categoryId) {
   if (course && categoryId) {
     const courseId = course.id;

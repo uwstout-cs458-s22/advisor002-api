@@ -4,7 +4,6 @@ const {
 } = require('../services/database');
 const Category = require('./Category');
 
-
 beforeAll(() => {
   log.disableAll();
 });
@@ -204,5 +203,41 @@ describe('Edit a Category', () => {
       rows: data
     });
     await expect(Category.editCategory(row.id, putDoc)).rejects.toThrowError('Category attributes are required');
+  });
+});
+
+
+
+describe('add course to existing category', () => {
+
+  
+
+  beforeEach(() => {
+    db.query.mockReset();
+    db.query.mockResolvedValue(null);
+  });
+
+  test('add a course to a valid category', async () => {
+
+    const course = {id: 1};
+    const data = dataForGetCategory(1);
+    db.query.mockResolvedValue({
+      rows: data
+    });
+    const actualResponse = await Category.addCourseToCategory(course, 2);
+    expect(actualResponse.rows).toBe(data);
+  });
+
+  test('500 error should be thrown when there is no response', async () => {
+    const course = {id: 1};
+    const data = dataForGetCategory(1);
+    db.query.mockResolvedValueOnce({
+      rows: data
+    }).mockResolvedValueOnce({rows: []});
+    await expect(Category.addCourseToCategory(course, 2)).rejects.toThrowError('inserted new courseCategory successfully without response');
+  });
+
+  test('400 error should be thrown when there are missing parameters', async () => {
+    await expect(Category.addCourseToCategory(null, null)).rejects.toThrowError('course and categoryId are required')
   });
 });
