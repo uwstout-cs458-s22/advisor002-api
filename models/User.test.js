@@ -240,9 +240,9 @@ describe('User Model', () => {
       db.query.mockResolvedValue({
         rows: [],
       });
-      await expect(User.getSemesterSchedule(putDoc.userid, putDoc.semesterid, putDoc.year, putDoc.type)).rejects.toThrowError(
-        'Unexpected DB condition,  select successful with no returned record'
-      );
+      await expect(
+        User.getSemesterSchedule(putDoc.userid, putDoc.semesterid, putDoc.year, putDoc.type)
+      ).rejects.toThrowError('Unexpected DB condition,  select successful with no returned record');
     });
 
     test('should return null for database error', async () => {
@@ -432,8 +432,51 @@ describe('User Model', () => {
     test('user deletes themself but no response returned', async () => {
       const data = dataForDeleteUser(1);
       const row = data[0];
-      db.query.mockResolvedValue({ rows: []});
-      await expect(User.deleteUser(row.id, row.email)).rejects.toThrowError('Unexpected db condition, delete successful with no returned record');
+      db.query.mockResolvedValue({ rows: [] });
+      await expect(User.deleteUser(row.id, row.email)).rejects.toThrowError(
+        'Unexpected db condition, delete successful with no returned record'
+      );
+    });
+  });
+
+  describe('test findUsersCourses', () => {
+    test('successful query for a users planned courses', async () => {
+      const data = dataForGetUser(1);
+      db.query.mockResolvedValue({ rows: data });
+      expect(await User.findUsersCourses(1, 1, 1)).toBe(data);
+    });
+
+    test('successful query with no response', async () => {
+      const data = dataForGetUser(1);
+      db.query.mockResolvedValueOnce({rows: data})
+      .mockResolvedValueOnce({rows: data})
+      .mockResolvedValueOnce({rows: data})
+      .mockResolvedValue({rows: []});
+      await expect(await User.findUsersCourses(1, 1, 1)).rejects.toThrow(`an unknown error occured while attempting to find courses for user, ${1}`);
+    });
+
+    test('semester could not be found', async () => {
+      const data = dataForGetUser(1);
+      db.query.mockResolvedValueOnce({rows: data})
+      .mockResolvedValueOnce({rows: data})
+      .mockResolvedValue({rows: []});
+      await expect(await User.findUsersCourses(1, 1, 1)).rejects.toThrow(`Semester with id ${1} could not be found`);
+    });
+
+    test('course could not be found', async () => {
+      const data = dataForGetUser(1);
+      db.query.mockResolvedValueOnce({rows: data})
+      .mockResolvedValue({rows: []});
+      await expect(await User.findUsersCourses(1, 1, 1)).rejects.toThrow(`Course with id ${1} could not be found`);
+    });
+
+    test('user could not be found', async () => {
+      db.query.mockResolvedValue();
+      await expect(await User.findUsersCourses(1, 1, 1)).rejects.toThrow(`User with id ${1} could not be found`);
+    });
+
+    test('missing parameters', async () => {
+      await expect(await User.findUsersCourses()).rejects.toThrow(`all parameters are required`);
     });
   });
 });

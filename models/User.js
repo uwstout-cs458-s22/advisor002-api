@@ -8,6 +8,8 @@ const {
   whereParamsCourses,
 } = require('../services/sqltools');
 const env = require('../services/environment');
+const Course = require('../models/Course');
+const Semester = require('../models/Semester');
 
 // if found return { ... }
 // if not found return {}
@@ -152,6 +154,36 @@ async function update(id, newUser) {
   }
 }
 
+async function findUsersCourses(userId, courseId, semesterId) {
+  if (userId && courseId && semesterId) {
+    const foundUser = await findOne({id: userId});
+    const foundCourse = await Course.findOne({id: courseId});
+    const foundSemester = await Semester.findOne({id: semesterId});
+    if (Object.keys(foundUser).length > 0) {
+      if (Object.keys(foundCourse).length > 0) {
+        if (Object.keys(foundSemester).length > 0) {
+          try {
+            const res = await db.query(`SELECT c.*, s.type, s.year, u.email from "user" AS u 
+              LEFT JOIN "userCourse" AS uc ON uc.userid = u.id 
+              LEFT JOIN "semester" AS s ON s.id = uc.semesterid 
+              LEFT JOIN "course" AS c ON c.id = uc.courseid 
+              WHERE u.id = ${userId} AND c.id = ${courseId} AND s.id = ${semesterId};`);
+            if (res.rows.length > 0) {
+              return res.rows;
+            }
+          } catch (error){
+            throw HttpError(500, `an unknown error occured while attempting to find courses for user, ${userId}`);
+          }
+        }
+        throw HttpError(404, `Semester with id ${semesterId} could not be found`);
+      }
+      throw HttpError(404, `Course with id ${courseId} could not be found`);
+    }
+    throw HttpError(404, `User with id ${userId} could not be found`);
+  }
+  throw HttpError(500, `all parameters are required`);
+}
+
 module.exports = {
   findOne,
   findAll,
@@ -159,4 +191,5 @@ module.exports = {
   deleteUser,
   update,
   getSemesterSchedule,
+  findUsersCourses,
 };

@@ -74,6 +74,27 @@ module.exports = () => {
     }
   });
 
+  router.get('/:userid/courseplan', authorizeSession, async (req, res, next) => {
+    try {
+      const userid = req.params.userid;
+      const courseid = req.body[0].courseid;
+      const semesterid = req.body[0].semesterid;
+      const sender = await User.findOne({ userId: res.locals.userId });
+
+      if (sender.id === userid || checkPermissions(sender.role) > 0) {
+        const usersCourses = await User.findUsersCourses(userid, courseid, semesterid);
+        return res.send(usersCourses);
+      } else {
+        throw HttpError(
+          403,
+          `Forbidden if user is not the user viewing, or if the user viewing is not an admin or director`
+        );
+      }
+    } catch (error) {
+      next(error);
+    }
+  });
+
   router.put('/:id(\\d+)', authorizeSession, async (req, res, next) => {
     try {
       const id = req.params.id;
