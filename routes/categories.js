@@ -1,15 +1,10 @@
 const express = require('express');
 const log = require('loglevel');
 const HttpError = require('http-errors');
-const {
-  isEmpty
-} = require('../services/utils');
+const { isEmpty } = require('../services/utils');
 const Category = require('../models/Category');
 const User = require('../models/User');
-const {
-  authorizeSession,
-  checkPermissions
-} = require('../services/auth');
+const { authorizeSession, checkPermissions } = require('../services/auth');
 
 module.exports = () => {
   const router = express.Router();
@@ -30,10 +25,7 @@ module.exports = () => {
       next(error);
     }
   });
-
-
-
-
+  
   router.put('/:id', authorizeSession, async (req, res, next) => {
     try {
 
@@ -51,7 +43,8 @@ module.exports = () => {
       // If not enough parameters, error
       if (!id || !category || !sender) {
         throw HttpError(400, 'Missing parameters');
-      } else if (isEmpty(category)) { // If course is not found, error
+      } else if (isEmpty(category)) {
+        // If course is not found, error
         throw new HttpError.NotFound();
       } else {
         // Check the user's role for permission (must be role 'director')
@@ -76,9 +69,34 @@ module.exports = () => {
       next(error);
     }
   });
+  
+  // needs the id of the user making the request for authorization
+  router.post('/', authorizeSession, async (req, res, next) => {
+    try {
+      const userId = res.locals.userId;
+      const name = req.body.name;
+      const prefix = req.body.prefix;
 
-
-
+      if (!name || !prefix) {
+        throw HttpError(400, 'Required Parameters Missing');
+      }
+      const user = await User.findOne({ userId: userId });
+      if (user.role !== 'director') {
+        throw HttpError(
+          403,
+          `requester ${user.email} does not have permissions to create a category`
+        );
+      } else {
+        const category = await Category.createCategory(name, prefix);
+        res.status(201); // otherwise
+        res.setHeader('Location', `/category/${name}`);
+        log.info(`${req.method} ${req.originalUrl} success: returning category ${name}}`);
+        return res.send(category);
+      }
+    } catch (error) {
+      next(error);
+    }
+  });
 
   return router;
 };

@@ -30,6 +30,8 @@ jest.mock('../models/Course.js', () => {
     editCourse: jest.fn(),
     deleteCourse: jest.fn(),
     findCoursesInCategory: jest.fn(),
+    createCategory: jest.fn(),
+    findOneCategory: jest.fn(),
   };
 });
 

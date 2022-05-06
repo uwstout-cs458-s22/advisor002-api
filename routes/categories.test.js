@@ -25,7 +25,8 @@ function dataForGetCategory(rows, offset = 0) {
 jest.mock('../models/Category.js', () => {
   return {
     findOne: jest.fn(),
-    editCategory: jest.fn()
+    editCategory: jest.fn(),
+    createCategory: jest.fn(),
   };
 });
 
@@ -62,7 +63,6 @@ jest.mock('../services/auth', () => {
   };
 });
 
-
 describe('GET /categories', () => {
   beforeEach(() => {
     Category.findOne.mockReset();
@@ -90,9 +90,7 @@ describe('GET /categories', () => {
     test('should respond with a json object containing the category data', async () => {
       const data = dataForGetCategory(10);
       for (const row of data) {
-        const {
-          body: category
-        } = await callGetOnCategoryRoute(row);
+        const { body: category } = await callGetOnCategoryRoute(row);
         expect(category.id).toBe(row.id);
         expect(category.name).toBe(row.name);
         expect(category.prefix).toBe(row.prefix);
@@ -288,6 +286,92 @@ describe('GET /categories', () => {
         });
         expect(response.statusCode).toBe(403);
       });
+    });
+  });
+});
+
+describe('Post /category', () => {
+  describe('Create a category', () => {
+    beforeEach(() => {
+      Category.findOne.mockReset();
+      Category.findOne.mockResolvedValue(null);
+      Category.createCategory.mockReset();
+      Category.createCategory.mockResolvedValue(null);
+      User.findOne.mockReset();
+      User.findOne.mockResolvedValue(null);
+    });
+    test('Should call Category.create', async () => {
+      const data = dataForGetCategory(3);
+      for (let i = 0; i < data.length; i++) {
+        const row = data[i];
+        const requestParams = {
+          name: row.name,
+          prefix: row.prefix,
+        };
+
+        User.findOne.mockResolvedValue({ id: 6, email: 'something@uwstout.edu', role: 'director' });
+        Category.createCategory.mockResolvedValueOnce(row);
+        await request(app).post('/categories').send(requestParams);
+
+        expect(Category.createCategory.mock.calls).toHaveLength(i + 1);
+        expect(Category.createCategory.mock.calls[i]).toHaveLength(2);
+        expect(Category.createCategory.mock.calls[i][0]).toBe(row.name);
+        expect(Category.createCategory.mock.calls[i][1]).toBe(row.prefix);
+      }
+    });
+
+    test('Should respond with 201 if category is created', async () => {
+      const data = dataForGetCategory(3);
+      for (let i = 0; i < data.length; i++) {
+        const row = data[i];
+        const requestParams = {
+          name: row.name,
+          prefix: row.prefix,
+        };
+
+        User.findOne.mockResolvedValue({ id: 6, email: 'something@uwstout.edu', role: 'director' });
+        Category.createCategory.mockResolvedValueOnce(row);
+        const response = await request(app).post('/categories').send(requestParams);
+
+        expect(response.statusCode).toBe(201);
+        expect(response.body.name).toBe(row.name);
+        expect(response.body.prefix).toBe(row.prefix);
+      }
+    });
+
+    test('Should throw 400 if missing parameters', async () => {
+      const data = dataForGetCategory(1);
+      for (let i = 0; i < data.length; i++) {
+        const row = data[i];
+        // missing name
+        const requestParams = {
+          prefix: row.prefix,
+        };
+
+        User.findOne.mockResolvedValue({ id: 6, email: 'something@uwstout.edu', role: 'director' });
+        Category.createCategory.mockResolvedValueOnce(row);
+        const response = await request(app).post('/categories').send(requestParams);
+
+        expect(response.statusCode).toBe(400);
+      }
+    });
+
+    test('Should throw 403 if missing parametersuser does not have permissions to create a category', async () => {
+      const data = dataForGetCategory(1);
+      for (let i = 0; i < data.length; i++) {
+        const row = data[i];
+        // missing name
+        const requestParams = {
+          name: row.name,
+          prefix: row.prefix,
+        };
+
+        User.findOne.mockResolvedValue({ id: 6, email: 'something@uwstout.edu', role: 'user' });
+        Category.createCategory.mockResolvedValueOnce(row);
+        const response = await request(app).post('/categories').send(requestParams);
+
+        expect(response.statusCode).toBe(403);
+      }
     });
   });
 });

@@ -1,24 +1,14 @@
 const HttpError = require('http-errors');
 const log = require('loglevel');
-const {
-  db
-} = require('../services/database');
-const {
-  whereParams,
-  updateValues
-} = require('../services/sqltools');
-
+const { db } = require('../services/database');
+const { whereParams, updateValues, insertValues } = require('../services/sqltools');
 
 //  TEMP MADE FOR TESTING EDIT
 // if found return { ... }
 // if not found return {}
 // if db error, db.query will throw a rejected promise
 async function findOne(criteria) {
-
-  const {
-    text,
-    params
-  } = whereParams(criteria);
+  const { text, params } = whereParams(criteria);
 
   const res = await db.query(`SELECT * from "category" ${text} LIMIT 1;`, params);
 
@@ -30,7 +20,6 @@ async function findOne(criteria) {
   return {};
 }
 
-
 // Edit given course's attributes
 // if successful update record in database, return row modified 'res'
 // if successful, but no row updates/returned, throw error
@@ -38,26 +27,18 @@ async function findOne(criteria) {
 // otherwise throw error
 async function editCategory(id, resultCategory) {
   if (id && resultCategory) {
-
     if (!(resultCategory.name == null) || !(resultCategory.prefix == null)) {
+      const newCategoryJSON = {};
 
-      const newCategoryJSON = {}
+      if (!(resultCategory.name == null)) newCategoryJSON.name = resultCategory.name;
 
-      if (!(resultCategory.name == null))
-        newCategoryJSON.name = resultCategory.name
+      if (!(resultCategory.prefix == null)) newCategoryJSON.prefix = resultCategory.prefix;
 
-      if (!(resultCategory.prefix == null))
-        newCategoryJSON.prefix = resultCategory.prefix
-
-
-      const {
-        text,
-        params
-      } = updateValues(newCategoryJSON);
+      const { text, params } = updateValues(newCategoryJSON);
 
       const n = params.length;
       const paramList = [];
-      params.forEach(x => {
+      params.forEach((x) => {
         paramList.push(x);
       });
 
@@ -74,15 +55,35 @@ async function editCategory(id, resultCategory) {
     } else {
       throw HttpError(400, 'Category attributes are required');
     }
-
   } else {
     throw HttpError(400, 'Id and category attributes are required');
-
   }
 }
 
+async function createCategory(name, prefix) {
+  if (name && prefix) {
+    const { text, params } = insertValues({
+      name: name,
+      prefix: prefix,
+    });
+    const res = await db.query(`INSERT INTO "category" ${text} RETURNING *;`, params);
+    if (res.rows.length > 0) {
+      log.debug(
+        `successfully inserted category ${name} into category table with data: ${text}, ${JSON.stringify(
+          params
+        )}`
+      );
+
+      return res.rows[0];
+    }
+    throw HttpError(500, 'Inserted successfully, without response');
+  } else {
+    throw HttpError(400, 'Category name, and prefix are required');
+  }
+}
 
 module.exports = {
   findOne,
-  editCategory
+  editCategory,
+  createCategory,
 };
