@@ -82,8 +82,23 @@ async function createCategory(name, prefix) {
   }
 }
 
+// id is category id
+async function deleteCategory(id) {
+  if (id) {
+    const { text, params } = whereParams({ id: id });
+    const res = await db.query(`DELETE FROM "category" ${text} RETURNING *;`, params);
+    if (res.rows.length > 0) {
+      return `Successfully deleted category from db`;
+    }
+    throw HttpError(500, 'Unexpected db condition, delete successful with no returned record');
+  } else {
+    throw HttpError(400, 'id is required.');
+  }
+}
+
 module.exports = {
   findOne,
   editCategory,
   createCategory,
+  deleteCategory
 };
