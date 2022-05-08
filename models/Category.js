@@ -92,7 +92,7 @@ async function deleteCategory(id) {
     }
     throw HttpError(500, 'Unexpected db condition, delete successful with no returned record');
   } else {
-    throw HttpError(400, 'id is required.');
+    throw HttpError(400, 'id is required');
   }
 }
 

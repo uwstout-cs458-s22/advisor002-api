@@ -102,11 +102,8 @@ module.exports = () => {
     try {
       const userId = res.locals.userId;
       const id = req.params.id;
-      if (!id) {
-        throw HttpError(400, 'Required Parameters Missing');
-      }
       const user = await User.findOne({ userId: userId });
-      if (user.role !== 'admin') {
+      if (user.role !== 'director') {
         throw HttpError(
           403,
           `requester ${user.email} does not have permissions to delete category`
