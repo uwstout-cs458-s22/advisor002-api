@@ -265,7 +265,7 @@ describe('DELETE Category', () => {
     row.enable = false;
     db.query.mockResolvedValue({ rows: data });
     const response = await Category.deleteCategory(row.id);
-    expect(db.query.mock.calls[0][0]).toBe(`DELETE FROM "category" WHERE \"id\"=$1 RETURNING *;`);
+    expect(db.query.mock.calls[0][0]).toBe(`DELETE FROM "category" WHERE "id"=$1 RETURNING *;`);
     expect(response).toBe('Successfully deleted category from db');
   });
 
