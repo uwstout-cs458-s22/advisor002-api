@@ -236,7 +236,7 @@ describe('Create a Category', () => {
       'Inserted successfully, without response'
     );
   });
-
+  
   test('Should throw 400 if no parameters', async () => {
     await expect(Category.createCategory()).rejects.toThrowError(
       'Category name, and prefix are required'
@@ -244,3 +244,33 @@ describe('Create a Category', () => {
   });
 });
 
+describe('add course to existing category', () => {
+  beforeEach(() => {
+    db.query.mockReset();
+    db.query.mockResolvedValue(null);
+  });
+
+  test('add a course to a valid category', async () => {
+
+    const course = {id: 1};
+    const data = dataForGetCategory(1);
+    db.query.mockResolvedValue({
+      rows: data
+    });
+    const actualResponse = await Category.addCourseToCategory(course, 2);
+    expect(actualResponse.rows).toBe(data);
+  });
+
+  test('500 error should be thrown when there is no response', async () => {
+    const course = {id: 1};
+    const data = dataForGetCategory(1);
+    db.query.mockResolvedValueOnce({
+      rows: data
+    }).mockResolvedValueOnce({rows: []});
+    await expect(Category.addCourseToCategory(course, 2)).rejects.toThrowError('inserted new courseCategory successfully without response');
+  });
+
+  test('400 error should be thrown when there are missing parameters', async () => {
+    await expect(Category.addCourseToCategory(null, null)).rejects.toThrowError('course and categoryId are required')
+  });
+});

@@ -4,6 +4,7 @@ const HttpError = require('http-errors');
 const { authorizeSession, checkPermissions } = require('./../services/auth');
 const Course = require('./../models/Course');
 const User = require('./../models/User');
+const Category = require('./../models/Category');
 const { isEmpty } = require('./../services/utils');
 
 module.exports = () => {
@@ -18,6 +19,7 @@ module.exports = () => {
       const credits = req.body[0].credits;
       const type = req.body[0].type;
       const year = req.body[0].year;
+      const categoryId = req.body[0].categoryId;
 
       if (!name || !userId || !credits || !section) {
         throw HttpError(400, 'Required Parameters Missing');
@@ -33,6 +35,11 @@ module.exports = () => {
         res.status(201); // otherwise
         res.setHeader('Location', `/courses/${name}`);
         log.info(`${req.method} ${req.originalUrl} success: returning course ${name}}`);
+        if(categoryId) { // if the course was created successfully and a categoryId was in the request
+          const courseCategory = await Category.addCourseToCategory(course, categoryId);
+          res.status(201);
+          log.info(`${req.method} success: created new course category relation ${courseCategory}}`)
+        }
         return res.send(course);
       }
     } catch (error) {
