@@ -55,7 +55,6 @@ CREATE TABLE IF NOT EXISTS "courseSemester" (
 		REFERENCES "course" (id)
 );
 
-
 CREATE TABLE IF NOT EXISTS "courseCategory" (
 	courseId integer,
 	categoryId integer,

@@ -1,7 +1,5 @@
 const log = require('loglevel');
-const {
-  db
-} = require('../services/database');
+const {db} = require('../services/database');
 const Category = require('./Category');
 
 beforeAll(() => {
@@ -36,17 +34,13 @@ function dataForGetCategory(rows, offset = 0) {
   return data;
 }
 
-
 describe('Category Model', () => {
   beforeEach(() => {
     db.query.mockReset();
     db.query.mockResolvedValue(null);
   });
 
-
-
   describe('querying a single category by id', () => {
-
     beforeEach(() => {
       db.query.mockReset();
       db.query.mockResolvedValue(null);
@@ -96,11 +90,7 @@ describe('Category Model', () => {
   });
 });
 
-
-
-
 describe('Edit a Category', () => {
-
   beforeEach(() => {
     db.query.mockReset();
     db.query.mockResolvedValue(null);
@@ -182,17 +172,19 @@ describe('Edit a Category', () => {
   test('Throw 500 error for other errors', async () => {
     const data = dataForGetCategory(1);
     const row = data[0];
-    row.name = "OldCourse"
-    row.prefix = "OC"
+    row.name = 'OldCourse';
+    row.prefix = 'OC';
     const putDoc = {
       name: 'NewCourse',
-      prefix: 'NC'
+      prefix: 'NC',
     };
 
     db.query.mockResolvedValue({
-      rows: []
+      rows: [],
     });
-    await expect(Category.editCategory(row.id, putDoc)).rejects.toThrowError('Unexpected DB condition, update successful with no returned record');
+    await expect(Category.editCategory(row.id, putDoc)).rejects.toThrowError(
+      'Unexpected DB condition, update successful with no returned record'
+    );
   });
 
   test('Throw 400 for no attributes provided', async () => {
@@ -200,18 +192,59 @@ describe('Edit a Category', () => {
     const row = data[0];
     const putDoc = {};
     db.query.mockResolvedValue({
-      rows: data
+      rows: data,
     });
-    await expect(Category.editCategory(row.id, putDoc)).rejects.toThrowError('Category attributes are required');
+    await expect(Category.editCategory(row.id, putDoc)).rejects.toThrowError(
+      'Category attributes are required'
+    );
   });
 });
 
+describe('Create a Category', () => {
+  beforeEach(() => {
+    db.query.mockReset();
+    db.query.mockResolvedValue(null);
+  });
 
+  test('Should call Category.create', async () => {
+    const data = dataForGetCategory(1);
+    const row = data[0];
+    row.enable = false;
+    db.query.mockResolvedValue({ rows: data });
+    const category = await Category.createCategory(row.name, row.prefix);
+    expect(db.query.mock.calls).toHaveLength(1);
+    expect(db.query.mock.calls[0]).toHaveLength(2);
+    expect(db.query.mock.calls[0][0]).toBe(
+      'INSERT INTO "category" ("name","prefix") VALUES ($1,$2) RETURNING *;'
+    );
+    expect(db.query.mock.calls[0][1]).toHaveLength(2);
+    expect(db.query.mock.calls[0][1][0]).toBe(row.name);
+    expect(db.query.mock.calls[0][1][1]).toBe(row.prefix);
+    for (const key in Object.keys(row)) {
+      expect(category).toHaveProperty(key, row[key]);
+    }
+  });
+
+  test('Should throw 500 if no response', async () => {
+    const data = dataForGetCategory(1);
+    const row = data[0];
+    db.query.mockResolvedValue({
+      // empty
+      rows: [],
+    });
+    await expect(Category.createCategory(row.name, row.prefix)).rejects.toThrowError(
+      'Inserted successfully, without response'
+    );
+  });
+  
+  test('Should throw 400 if no parameters', async () => {
+    await expect(Category.createCategory()).rejects.toThrowError(
+      'Category name, and prefix are required'
+    );
+  });
+});
 
 describe('add course to existing category', () => {
-
-  
-
   beforeEach(() => {
     db.query.mockReset();
     db.query.mockResolvedValue(null);

@@ -69,6 +69,7 @@ async function editCategory(id, resultCategory) {
   }
 }
 
+
 // creates a new entry in courseCategory from a course and category id
 async function addCourseToCategory(course, categoryId) {
   if (course && categoryId) {
@@ -90,8 +91,31 @@ async function addCourseToCategory(course, categoryId) {
   }
 }
 
+async function createCategory(name, prefix) {
+  if (name && prefix) {
+    const { text, params } = insertValues({
+      name: name,
+      prefix: prefix,
+    });
+    const res = await db.query(`INSERT INTO "category" ${text} RETURNING *;`, params);
+    if (res.rows.length > 0) {
+      log.debug(
+        `successfully inserted category ${name} into category table with data: ${text}, ${JSON.stringify(
+          params
+        )}`
+      );
+
+      return res.rows[0];
+    }
+    throw HttpError(500, 'Inserted successfully, without response');
+  } else {
+    throw HttpError(400, 'Category name, and prefix are required');
+  }
+}
+
 module.exports = {
   findOne,
   editCategory,
   addCourseToCategory,
+  createCategory
 };

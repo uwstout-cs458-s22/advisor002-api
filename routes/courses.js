@@ -13,7 +13,6 @@ module.exports = () => {
   // needs the id of the user making the request for authorization
   router.post('/', authorizeSession, async (req, res, next) => {
     try {
-
       const userId = res.locals.userId;
       const section = req.body[0].section;
       const name = req.body[0].name;
@@ -43,32 +42,32 @@ module.exports = () => {
         }
         return res.send(course);
       }
-    } catch(error) {
+    } catch (error) {
       next(error);
     }
   });
-  
+
   // Edit a course (PUT request)
   // Access via http://localhost:3000/courses/# (# is the id of the course to edit)
   // PUT body should contain JSON for course name, section, credits
   router.put('/:id', authorizeSession, async (req, res, next) => {
     try {
-
       // Get the course to edit and make sure it exists in database
       const id = req.params.id;
       const course = await Course.findOne({
-        id: id
+        id: id,
       });
 
       // Get userId from session ID
       const sender = await User.findOne({
-        userId: res.locals.userId
+        userId: res.locals.userId,
       });
 
       // If not enough parameters, error
       if (!id || !course || !sender) {
         throw HttpError(400, 'Missing parameters');
-      } else if (isEmpty(course)) { // If course is not found, error
+      } else if (isEmpty(course)) {
+        // If course is not found, error
         throw new HttpError.NotFound();
       } else {
         // Check the user's role for permission (must be role 'director')
@@ -86,10 +85,11 @@ module.exports = () => {
           const updatedCourse = await Course.editCourse(id, newCourseJSON);
           res.status(200);
           res.send(updatedCourse);
-        } else { // If user does not have permission, error
+        } else {
+          // If user does not have permission, error
           res.status(403);
           res.send({
-            error: 'You are not authorized to edit courses'
+            error: 'You are not authorized to edit courses',
           });
         }
       }
@@ -103,32 +103,36 @@ module.exports = () => {
       const criteria = {};
 
       log.debug(req.query);
-
       if(req.query.categoryid){
         criteria.categoryid = req.query.categoryid;
       }
 
-      if(req.query.credits) {
-        if(!parseInt(req.query.credits) && req.query.credits !== '0') {
+      if (req.query.credits) {
+        if (!parseInt(req.query.credits) && req.query.credits !== '0') {
           throw HttpError(400, 'Credits must be a valid integer');
         }
 
         criteria.credits = req.query.credits;
       }
 
-      if(req.query.name) {
+      if (req.query.name) {
         criteria.name = req.query.name;
       }
 
-      if(req.query.type) {
-        if(req.query.type !== 'fall' && req.query.type !== 'spring' && req.query.type !== 'winter' && req.query.type !== 'summer') {
+      if (req.query.type) {
+        if (
+          req.query.type !== 'fall' &&
+          req.query.type !== 'spring' &&
+          req.query.type !== 'winter' &&
+          req.query.type !== 'summer'
+        ) {
           throw HttpError(400, 'Type must be one of fall, spring, summer, or winter');
         }
 
         criteria.type = req.query.type;
       }
 
-      if(req.query.year) {
+      if (req.query.year) {
         if (!parseInt(req.query.year)) {
           throw HttpError(400, 'Year must be a valid integer');
         }
@@ -136,27 +140,26 @@ module.exports = () => {
         criteria.year = req.query.year;
       }
 
-      const courses = await Course.findAll(criteria,req.query.limit,req.query.offset);
-      return res.send(courses)
+      const courses = await Course.findAll(criteria, req.query.limit, req.query.offset);
+      return res.send(courses);
     } catch (error) {
       next(error);
     }
-  })
+  });
 
   router.get('/:courseid', authorizeSession, async (req, res, next) => {
     try {
       const courseid = req.params.courseid;
-      const courses = await Course.findAll({id: courseid});
-      if(isEmpty(courses)) {
+      const courses = await Course.findAll({ id: courseid });
+      if (isEmpty(courses)) {
         throw new HttpError.NotFound();
       }
       log.info(`${req.method} ${req.originalUrl} success: returning courses ${courseid}`);
       return res.send(courses);
-
     } catch (error) {
       next(error);
     }
-  })
+  });
 
   router.delete('/:id', authorizeSession, async (req, res, next) => {
     try {
@@ -168,7 +171,7 @@ module.exports = () => {
         throw new HttpError.Forbidden('You are not allowed to do this');
       }
       const sender = await User.findOne({
-        userId: res.locals.userId
+        userId: res.locals.userId,
       });
       if (!sender || isEmpty(sender)) {
         throw new HttpError.Forbidden('You are not allowed to do this');
@@ -177,7 +180,7 @@ module.exports = () => {
         throw new HttpError.Forbidden('You are not allowed to do this');
       }
       const course = await Course.findOne({
-        id: Id
+        id: Id,
       });
       if (isEmpty(course)) {
         throw new HttpError.NotFound();

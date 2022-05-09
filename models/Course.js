@@ -1,8 +1,6 @@
 const HttpError = require('http-errors');
 const log = require('loglevel');
-const {
-  db
-} = require('../services/database');
+const { db } = require('../services/database');
 const {
   insertValues,
   whereParams,
@@ -85,11 +83,8 @@ async function createCourse(name, credits, section, type, year) {
 // otherwise throw error
 async function deleteCourse(Id) {
   if (Id) {
-    const {
-      text,
-      params
-    } = whereParams({
-      id: Id
+    const { text, params } = whereParams({
+      id: Id,
     });
     const res = await db.query(`DELETE FROM "course" ${text} RETURNING *;`, params);
     if (res.rows.length > 0) {
@@ -111,16 +106,18 @@ async function findOne(criteria) {
     params
   } = whereParamsCourses(criteria);
   // Setup prepared statement to send to server with the variables
-  const res = await db.query(`SELECT c.*, s.type, s.year, ca.prefix, ca.name AS "categoryName" from "course" AS c ` +
-    `LEFT JOIN "courseSemester" AS cs ON cs.courseId = c.id ` +
-    `LEFT JOIN "semester" AS s ON s.id = cs.semesterId ` +
-    `LEFT JOIN "courseCategory" AS cc ON cc.courseId = c.id ` +
-    `LEFT JOIN "category" AS ca ON ca.id = cc.categoryId ` +
-    `${text};`, params);
-
+  const res = await db.query(
+    `SELECT c.*, s.type, s.year from "course" AS c ` +
+      `LEFT JOIN "courseSemester" AS cs ON cs.courseId = c.id ` +
+      `LEFT JOIN "semester" AS s ON s.id = cs.semesterId ` +
+      `${text};`,
+    params
+  );
   // If the result count is more than 0 than return the results gathered from the database
   if (res.rows.length > 0) {
-    log.debug(`Successfully found course from db with criteria: ${text}, ${JSON.stringify(params)}`);
+    log.debug(
+      `Successfully found course from db with criteria: ${text}, ${JSON.stringify(params)}`
+    );
     return res.rows[0];
   }
   log.debug(`No courses found in db with criteria: ${text}, ${JSON.stringify(params)}`);
@@ -139,17 +136,18 @@ async function findAll(criteria, limit = 100, offset = 0) {
   // Calculate offset and limit position based on length of params
   // and add them to the list of params for prepared statement
   const n = params.length;
-  const p = params.concat([limit, offset])
+  const p = params.concat([limit, offset]);
   // Setup query and add variables for prepared statement and send it
-  const res = await db.query(`SELECT c.*, s.type, s.year, ca.prefix, ca.name AS "categoryName" from "course" AS c ` +
-    `LEFT JOIN "courseSemester" AS cs ON cs.courseId = c.id ` +
-    `LEFT JOIN "semester" AS s ON s.id = cs.semesterId ` +
-    `LEFT JOIN "courseCategory" AS cc ON cc.courseId = c.id ` +
-    `LEFT JOIN "category" AS ca ON ca.id = cc.categoryId ` +
-    `${text} LIMIT $${n + 1} OFFSET $${n + 2};`, p);
+  const res = await db.query(
+    `SELECT c.*, s.type, s.year from "course" AS c ` +
+      `LEFT JOIN "courseSemester" AS cs ON cs.courseId = c.id ` +
+      `LEFT JOIN "semester" AS s ON s.id = cs.semesterId ` +
+      `${text} LIMIT $${n + 1} OFFSET $${n + 2};`,
+    p
+  );
   log.debug(
     `Retrieved ${res.rows.length} courses from db with criteria ${text}, ${JSON.stringify(params)}`
-  )
+  );
 
   // Return the results
   return res.rows;
@@ -181,38 +179,40 @@ async function findCoursesInCategory(categoryid) {
 // otherwise throw error
 async function editCourse(id, resultCourse) {
   if (id && resultCourse) {
-
     // See if a prefix was changed
     let changeFlag = false
 
     // If wanting to change the prefix/category
     if (resultCourse.prefix) {
-
       // Grab the id of the prefix entered
-      const tempCategoryId = await db.query(`SELECT id FROM category WHERE prefix='${resultCourse.prefix}';`);
+      const tempCategoryId = await db.query(
+        `SELECT id FROM category WHERE prefix='${resultCourse.prefix}';`
+      );
 
       // If valid prefix
       if (typeof tempCategoryId.rows[0] !== 'undefined') {
         // Update the course category based on the id/prefix given
-        const {
-          text,
-          params
-        } = updateValues({
-          categoryid: tempCategoryId.rows[0].id
+        const { text, params } = updateValues({
+          categoryid: tempCategoryId.rows[0].id,
         });
 
         const n = params.length;
         const paramList = [];
-        params.forEach(x => {
+        params.forEach((x) => {
           paramList.push(x);
         });
         paramList.push(id);
 
-        const resPrefix = await db.query(`UPDATE "courseCategory" ${text} WHERE courseid = $${n + 1} RETURNING *;`, paramList);
+        const resPrefix = await db.query(
+          `UPDATE "courseCategory" ${text} WHERE courseid = $${n + 1} RETURNING *;`,
+          paramList
+        );
 
         if (!(resPrefix.rows.length > 0)) {
           log.debug(
-            `Problem updating course category with id ${id} in the database with the data ${JSON.stringify(resultCourse)}`
+            `Problem updating course category with id ${id} in the database with the data ${JSON.stringify(
+              resultCourse
+            )}`
           );
           throw HttpError(500, 'Unexpected DB condition'); // New
         } else {
@@ -288,38 +288,40 @@ async function editCourse(id, resultCourse) {
 
     // THEN update the rest (name, section, credits)
     // Check if any are null, if all are null then you should skip this part and only submit the prefix IF a prefix was submitted (prefix flag)
-    if (!(resultCourse.name == null) || !(resultCourse.section == null) || !(resultCourse.credits == null)) {
+    if (
+      !(resultCourse.name == null) ||
+      !(resultCourse.section == null) ||
+      !(resultCourse.credits == null)
+    ) {
+      const newCourseJSON = {};
 
-      const newCourseJSON = {}
+      if (!(resultCourse.name == null)) newCourseJSON.name = resultCourse.name;
 
-      if (!(resultCourse.name == null))
-        newCourseJSON.name = resultCourse.name
+      if (!(resultCourse.section == null)) newCourseJSON.section = resultCourse.section;
 
-      if (!(resultCourse.section == null))
-        newCourseJSON.section = resultCourse.section
+      if (!(resultCourse.credits == null)) newCourseJSON.credits = resultCourse.credits;
 
-      if (!(resultCourse.credits == null))
-        newCourseJSON.credits = resultCourse.credits
-
-      const {
-        text,
-        params
-      } = updateValues(newCourseJSON);
+      const { text, params } = updateValues(newCourseJSON);
 
       const n = params.length;
       const paramList = [];
-      params.forEach(x => {
+      params.forEach((x) => {
         paramList.push(x);
       });
 
       paramList.push(id);
 
-      const res = await db.query(`UPDATE "course" ${text} WHERE id = $${n + 1} RETURNING *;`, paramList);
+      const res = await db.query(
+        `UPDATE "course" ${text} WHERE id = $${n + 1} RETURNING *;`,
+        paramList
+      );
 
       // Return values if successful
       if (res.rows.length > 0) {
         log.debug(
-          `Successfully updated course with id ${id} in the database with the data ${JSON.stringify(resultCourse)}`
+          `Successfully updated course with id ${id} in the database with the data ${JSON.stringify(
+            resultCourse
+          )}`
         );
         // Return all course info AND category prefix
         const result = await db.query(`SELECT c.id, c.name, c.credits, c.section, ca.prefix FROM "course" AS c ` +
@@ -331,7 +333,6 @@ async function editCourse(id, resultCourse) {
         return result.rows[0];
       } // If not, throw error
       throw HttpError(500, 'Unexpected DB condition, update successful with no returned record');
-
     }
 
     // If a prefix (flag) was submitted but nothing else
@@ -344,16 +345,14 @@ async function editCourse(id, resultCourse) {
         `LEFT JOIN "category" AS ca ON ca.id = cc.categoryId ` +
         `WHERE c.id = ${id} LIMIT 1;`);
       return res.rows[0];
-
     } else {
       throw HttpError(400, 'Course attributes required');
     }
-
-  } else { // If missing parameters, throw error
+  } else {
+    // If missing parameters, throw error
     throw HttpError(400, 'Id and a course attribute required');
   }
 }
-
 
 module.exports = {
   createCourse,
@@ -361,5 +360,5 @@ module.exports = {
   findOne,
   findAll,
   findCoursesInCategory,
-  editCourse
+  editCourse,
 };

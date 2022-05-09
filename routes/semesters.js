@@ -99,6 +99,32 @@ module.exports = () => {
     });
 
 
+    router.post('/', authorizeSession, async(req, res, next) => {
+
+        try {
+            const userId = res.locals.userId;
+            const year = req.body.year;
+            const type = req.body.type;
+         
+            if (!userId || !year || !type) {
+                throw HttpError(400, 'id and year and type are required');
+            }
+            const user = await User.findOne({ userId: userId });
+            
+            if (user.role === 'user') {
+                throw HttpError(403, `requester ${user.email} does not have permission to create a semester`);
+            } else {
+                const semester = await Semester.createSemester(year, type);
+                log.info(`${req.method} ${req.originalUrl} success: creating semester`);
+                return res.send(semester);
+            }
+        }catch(error) {
+            next(error)
+        }
+    })
+
+
+
 
 
     return router;
