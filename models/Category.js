@@ -13,7 +13,9 @@ async function findOne(criteria) {
   const res = await db.query(`SELECT * from "category" ${text} LIMIT 1;`, params);
 
   if (res.rows.length > 0) {
-    log.debug(`Successfully found category from db with criteria: ${text}, ${JSON.stringify(params)}`);
+    log.debug(
+      `Successfully found category from db with criteria: ${text}, ${JSON.stringify(params)}`
+    );
     return res.rows[0];
   }
   log.debug(`No category found in db with criteria: ${text}, ${JSON.stringify(params)}`);
@@ -44,10 +46,17 @@ async function editCategory(id, resultCategory) {
 
       paramList.push(id);
 
-      const res = await db.query(`UPDATE "category" ${text} WHERE id = $${n + 1} RETURNING *;`, paramList);
+      const res = await db.query(
+        `UPDATE "category" ${text} WHERE id = $${n + 1} RETURNING *;`,
+        paramList
+      );
 
       if (res.rows.length > 0) {
-        log.debug(`Successfully updated category with id ${id} in the database with the data ${JSON.stringify(resultCategory)}`);
+        log.debug(
+          `Successfully updated category with id ${id} in the database with the data ${JSON.stringify(
+            resultCategory
+          )}`
+        );
         return res.rows[0];
       } else {
         throw HttpError(500, 'Unexpected DB condition, update successful with no returned record');
@@ -57,6 +66,28 @@ async function editCategory(id, resultCategory) {
     }
   } else {
     throw HttpError(400, 'Id and category attributes are required');
+  }
+}
+
+
+// creates a new entry in courseCategory from a course and category id
+async function addCourseToCategory(course, categoryId) {
+  if (course && categoryId) {
+    const courseId = course.id;
+    const foundCategory = findOne({ id: categoryId });
+    if (foundCategory !== {}) {
+      const { text, params } = insertValues({ courseid: courseId, categoryid: categoryId });
+      const res = await db.query(`INSERT INTO "courseCategory" ${text} RETURNING *;`, params);
+      if (res.rows.length > 0) {
+        return res;
+      } else {
+        throw HttpError(500, `inserted new courseCategory successfully without response`);
+      }
+    } else {
+      throw HttpError(404, `Category with id ${categoryId} does not exist`);
+    }
+  } else {
+    throw HttpError(400, 'course and categoryId are required');
   }
 }
 
@@ -85,5 +116,6 @@ async function createCategory(name, prefix) {
 module.exports = {
   findOne,
   editCategory,
-  createCategory,
+  addCourseToCategory,
+  createCategory
 };
