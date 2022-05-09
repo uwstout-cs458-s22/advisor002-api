@@ -130,7 +130,7 @@ async function deleteCategory(id) {
 module.exports = {
   findOne,
   editCategory,
-  deleteCategory
+  deleteCategory,
   addCourseToCategory,
   createCategory
 };
