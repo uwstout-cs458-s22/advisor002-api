@@ -81,7 +81,7 @@ module.exports = () => {
         throw HttpError(400, 'Required Parameters Missing');
       }
       const user = await User.findOne({ userId: userId });
-      if (user.role !== 'director') {
+      if (checkPermissions(user.role) < 1) {
         throw HttpError(
           403,
           `requester ${user.email} does not have permissions to create a category`
@@ -103,7 +103,7 @@ module.exports = () => {
       const userId = res.locals.userId;
       const id = req.params.id;
       const user = await User.findOne({ userId: userId });
-      if (user.role !== 'director') {
+      if (checkPermissions(user.role) < 1) {
         throw HttpError(
           403,
           `requester ${user.email} does not have permissions to delete category`
