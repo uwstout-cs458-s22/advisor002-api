@@ -14,7 +14,7 @@ module.exports = () => {
     try {
       const id = req.params.id;
       const user = await Category.findOne({
-        id: id
+        id: id,
       });
       if (isEmpty(user)) {
         throw new HttpError.NotFound();
@@ -25,19 +25,18 @@ module.exports = () => {
       next(error);
     }
   });
-  
+
   router.put('/:id', authorizeSession, async (req, res, next) => {
     try {
-
       // Get the course to edit and make sure it exists in database
       const id = req.params.id;
       const category = await Category.findOne({
-        id: id
+        id: id,
       });
 
       // Get userId from session ID
       const sender = await User.findOne({
-        userId: res.locals.userId
+        userId: res.locals.userId,
       });
 
       // If not enough parameters, error
@@ -51,17 +50,18 @@ module.exports = () => {
         if (checkPermissions(sender.role) >= 1) {
           const newCategoryJSON = {
             name: req.body.name,
-            prefix: req.body.prefix
+            prefix: req.body.prefix,
           };
 
           // Call the function to edit the course parameters and return results
           const updatedCategory = await Category.editCategory(id, newCategoryJSON);
           res.status(200);
           res.send(updatedCategory);
-        } else { // If user does not have permission, error
+        } else {
+          // If user does not have permission, error
           res.status(403);
           res.send({
-            error: 'You are not authorized to edit categories'
+            error: 'You are not authorized to edit categories',
           });
         }
       }
@@ -69,7 +69,7 @@ module.exports = () => {
       next(error);
     }
   });
-  
+
   // needs the id of the user making the request for authorization
   router.post('/', authorizeSession, async (req, res, next) => {
     try {
@@ -81,7 +81,7 @@ module.exports = () => {
         throw HttpError(400, 'Required Parameters Missing');
       }
       const user = await User.findOne({ userId: userId });
-      if (user.role !== 'director') {
+      if (checkPermissions(user.role) < 1) {
         throw HttpError(
           403,
           `requester ${user.email} does not have permissions to create a category`
@@ -92,6 +92,26 @@ module.exports = () => {
         res.setHeader('Location', `/category/${name}`);
         log.info(`${req.method} ${req.originalUrl} success: returning category ${name}}`);
         return res.send(category);
+      }
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.delete('/:id', authorizeSession, async (req, res, next) => {
+    try {
+      const userId = res.locals.userId;
+      const id = req.params.id;
+      const user = await User.findOne({ userId: userId });
+      if (checkPermissions(user.role) < 1) {
+        throw HttpError(
+          403,
+          `requester ${user.email} does not have permissions to delete category`
+        );
+      } else {
+        await Category.deleteCategory(id);
+        res.status(200);
+        res.send();
       }
     } catch (error) {
       next(error);

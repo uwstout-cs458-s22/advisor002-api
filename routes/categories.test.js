@@ -27,6 +27,7 @@ jest.mock('../models/Category.js', () => {
     findOne: jest.fn(),
     editCategory: jest.fn(),
     createCategory: jest.fn(),
+    deleteCategory: jest.fn(),
   };
 });
 
@@ -139,19 +140,19 @@ describe('GET /categories', () => {
 
         const newCategoryParams = {
           name: 'TestClass',
-          prefix: 'TC'
+          prefix: 'TC',
         };
 
         const resultCategoryParams = {
           id: row.id,
           name: 'TestClass',
-          prefix: 'TC'
+          prefix: 'TC',
         };
 
         Category.findOne.mockResolvedValueOnce({
           id: row.id,
           name: row.name,
-          prefix: row.prefix
+          prefix: row.prefix,
         });
         User.findOne.mockResolvedValueOnce({
           id: 456,
@@ -175,19 +176,19 @@ describe('GET /categories', () => {
 
         const newCategoryParams = {
           name: 'TestClass',
-          prefix: 'TC'
+          prefix: 'TC',
         };
 
         const resultCategoryParams = {
           id: row.id,
           name: 'TestClass',
-          prefix: 'TC'
+          prefix: 'TC',
         };
 
         Category.findOne.mockResolvedValueOnce({
           id: row.id,
           name: row.name,
-          prefix: row.prefix
+          prefix: row.prefix,
         });
         User.findOne.mockResolvedValueOnce({
           id: 456,
@@ -201,9 +202,9 @@ describe('GET /categories', () => {
           resultCategoryParams,
         });
 
-        const {
-          body: course
-        } = await request(app).put(`/categories/${row.id}`).send(newCategoryParams);
+        const { body: course } = await request(app)
+          .put(`/categories/${row.id}`)
+          .send(newCategoryParams);
         expect(course.id).toBe(newCategoryParams.id);
       });
 
@@ -266,12 +267,12 @@ describe('GET /categories', () => {
 
         const newCategoryParams = {
           name: 'TestClass',
-          prefix: 'TC'
+          prefix: 'TC',
         };
 
         Category.findOne.mockResolvedValueOnce({
           name: 'TestClass',
-          prefix: 'TC'
+          prefix: 'TC',
         });
         User.findOne.mockResolvedValueOnce({
           id: 456,
@@ -373,5 +374,35 @@ describe('Post /category', () => {
         expect(response.statusCode).toBe(403);
       }
     });
+  });
+});
+
+describe('DELETE Categopry', () => {
+  beforeEach(() => {
+    Category.findOne.mockReset();
+    Category.findOne.mockResolvedValue(null);
+    Category.deleteCategory.mockReset();
+    Category.deleteCategory.mockResolvedValue(null);
+    User.findOne.mockReset();
+    User.findOne.mockResolvedValue(null);
+  });
+  test('Should return 200 on successful deletion', async () => {
+    const data = dataForGetCategory(1);
+
+    User.findOne.mockResolvedValue({ id: 7, emai: 'something@my.uwstout.edu', role: 'director' });
+    Category.deleteCategory.mockResolvedValue(data[0].id);
+
+    const response = await request(app).delete(`/categories/${data[0].id}`).send();
+    expect(response.statusCode).toBe(200);
+  });
+
+  test('Should return 403 if role is not director', async () => {
+    const data = dataForGetCategory(1);
+
+    User.findOne.mockResolvedValue({ id: 7, emai: 'something@my.uwstout.edu', role: 'user' });
+    Category.deleteCategory.mockResolvedValue();
+
+    const response = await request(app).delete(`/categories/${data[0].id}`).send();
+    expect(response.statusCode).toBe(403);
   });
 });
